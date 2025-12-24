@@ -28,6 +28,11 @@ export const CSS_VARS_DEPS: DependencySet = {
 	dev: ['tailwindcss', 'postcss', 'autoprefixer'],
 };
 
+export const CSS_VARS_NUXT_DEPS: DependencySet = {
+	production: ['@vueuse/core', '@nuxtjs/seo'],
+	dev: ['typescript', 'tailwindcss', '@tailwindcss/vite'],
+};
+
 export function getDependencies(
 	projectType: 'nuxt' | 'vue',
 	threejs: boolean,
@@ -49,9 +54,18 @@ export function getDependencies(
 	}
 
 	if (cssVars) {
-		deps.production.push(...CSS_VARS_DEPS.production);
-		deps.dev.push(...CSS_VARS_DEPS.dev);
+		if (projectType === 'nuxt') {
+			deps.production.push(...CSS_VARS_NUXT_DEPS.production);
+			deps.dev.push(...CSS_VARS_NUXT_DEPS.dev);
+		} else {
+			deps.production.push(...CSS_VARS_DEPS.production);
+			deps.dev.push(...CSS_VARS_DEPS.dev);
+		}
 	}
+
+	// Remove duplicates
+	deps.production = [...new Set(deps.production)];
+	deps.dev = [...new Set(deps.dev)];
 
 	return deps;
 }

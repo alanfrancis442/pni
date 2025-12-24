@@ -1,10 +1,11 @@
-import {readFileSync, writeFileSync, existsSync} from 'fs-extra';
+import {readFileSync, writeFileSync, existsSync} from 'fs';
 import {join} from 'path';
 import type {ProjectType} from './project-detection.js';
 
 export async function generateNuxtConfig(
 	projectPath: string,
 	threejs: boolean,
+	cssVars: boolean,
 ): Promise<void> {
 	const configPath = join(projectPath, 'nuxt.config.ts');
 	let configContent = '';
@@ -19,22 +20,141 @@ export default defineNuxtConfig({
 `;
 	}
 
-	// Add TresJS module if Three.js is selected
+	// Build modules array
+	const modules: string[] = [];
 	if (threejs && !configContent.includes('@tresjs/nuxt')) {
-		// Try to add the module to the modules array
-		if (configContent.includes('modules:')) {
-			configContent = configContent.replace(
-				/modules:\s*\[/,
-				'modules: [\n    \'@tresjs/nuxt\',',
-			);
-		} else {
-			// Add modules array if it doesn't exist
+		modules.push('@tresjs/nuxt');
+	}
+	if (cssVars && !configContent.includes('shadcn-nuxt')) {
+		modules.push('shadcn-nuxt');
+	}
+	if (!configContent.includes('@nuxtjs/seo')) {
+		modules.push('@nuxtjs/seo');
+	}
+
+	// Add compatibilityDate if not present
+	if (!configContent.includes('compatibilityDate')) {
+		configContent = configContent.replace(
+			/export default defineNuxtConfig\(\{/,
+			`export default defineNuxtConfig({
+  compatibilityDate: '2025-07-15',`,
+		);
+	}
+
+	// Add CSS import if cssVars is true
+	if (cssVars) {
+		const tailwindCssPath1 = join(projectPath, 'app', 'assets', 'css', 'tailwind.css');
+		const tailwindCssPath2 = join(projectPath, 'assets', 'css', 'tailwind.css');
+		const tailwindCssPath = existsSync(join(projectPath, 'app')) ? tailwindCssPath1 : tailwindCssPath2;
+		const cssImport = tailwindCssPath.includes('app/') ? '~/app/assets/css/tailwind.css' : '~/assets/css/tailwind.css';
+		
+		if (!configContent.includes('css:')) {
 			configContent = configContent.replace(
 				/export default defineNuxtConfig\(\{/,
 				`export default defineNuxtConfig({
-  modules: ['@tresjs/nuxt'],`,
+  css: ['${cssImport}'],`,
+			);
+		} else if (!configContent.includes(cssImport)) {
+			configContent = configContent.replace(
+				/css:\s*\[/,
+				`css: ['${cssImport}',`,
 			);
 		}
+	}
+
+	// Add vite plugins for Tailwind if cssVars is true
+	if (cssVars && !configContent.includes('@tailwindcss/vite')) {
+		if (!configContent.includes('import tailwindcss')) {
+			configContent = `import tailwindcss from '@tailwindcss/vite'\n\n${configContent}`;
+		}
+
+		if (!configContent.includes('vite:')) {
+			configContent = configContent.replace(
+				/export default defineNuxtConfig\(\{/,
+				`export default defineNuxtConfig({
+  vite: {
+    plugins: [tailwindcss()],
+  },`,
+			);
+		} else if (!configContent.includes('tailwindcss()')) {
+			configContent = configContent.replace(
+				/vite:\s*\{/,
+				`vite: {
+    plugins: [tailwindcss()],`,
+			);
+		}
+	}
+
+	// Add modules
+	if (modules.length > 0) {
+		if (configContent.includes('modules:')) {
+			// Add to existing modules array
+			const existingModules = configContent.match(/modules:\s*\[([^\]]*)\]/);
+			if (existingModules && existingModules[1]) {
+				const existingModuleList = existingModules[1].trim();
+				const allModules = [...modules];
+				if (existingModuleList) {
+					const existing = existingModuleList
+						.split(',')
+						.map(m => m.trim().replace(/['"]/g, ''));
+					allModules.push(...existing);
+				}
+				const uniqueModules = [...new Set(allModules)];
+				configContent = configContent.replace(
+					/modules:\s*\[[^\]]*\]/,
+					`modules: [${uniqueModules.map(m => `'${m}'`).join(', ')}]`,
+				);
+			}
+		} else {
+			// Add new modules array
+			configContent = configContent.replace(
+				/export default defineNuxtConfig\(\{/,
+				`export default defineNuxtConfig({
+  modules: [${modules.map(m => `'${m}'`).join(', ')}],`,
+			);
+		}
+	}
+
+	// Add shadcn config if cssVars is true
+	if (cssVars && !configContent.includes('shadcn:')) {
+		configContent = configContent.replace(
+			/export default defineNuxtConfig\(\{/,
+			`export default defineNuxtConfig({
+  shadcn: {
+    prefix: '',
+    componentDir: '@/components/ui',
+  },`,
+		);
+	}
+
+	// Add SEO config if not present
+	if (!configContent.includes('site:')) {
+		configContent = configContent.replace(
+			/export default defineNuxtConfig\(\{/,
+			`export default defineNuxtConfig({
+  site: {
+    name: 'New Setup',
+    url: 'https://newsetup.com',
+    description: 'A new setup for your project',
+    image: 'https://newsetup.com/og-image.png',
+  },
+  ogImage: {
+    defaults: {
+      component: 'OgImage',
+      props: {
+        title: 'New Setup',
+        description: 'A new setup for your project',
+        image: 'https://newsetup.com/og-image.png',
+      },
+    }
+  },
+  robots: {
+    disallow: ['/api'],
+  },
+  sitemap: {
+    // sources: ['/api/__sitemap__/urls'] // Fetch from API
+  },`,
+		);
 	}
 
 	writeFileSync(configPath, configContent, 'utf-8');
@@ -42,6 +162,7 @@ export default defineNuxtConfig({
 
 export async function generateViteConfig(
 	projectPath: string,
+  //@ts-ignore
 	threejs: boolean,
 ): Promise<void> {
 	const configPath = join(projectPath, 'vite.config.ts');
@@ -153,12 +274,14 @@ export async function generateConfigFiles(
 	cssVars: boolean,
 ): Promise<void> {
 	if (projectType === 'nuxt') {
-		await generateNuxtConfig(projectPath, threejs);
+		await generateNuxtConfig(projectPath, threejs, cssVars);
 	} else if (projectType === 'vue') {
 		await generateViteConfig(projectPath, threejs);
 	}
 
-	if (cssVars) {
+	if (cssVars && projectType !== 'nuxt') {
+		// Only generate Tailwind config for Vue projects
+		// Nuxt uses @tailwindcss/vite which doesn't need this
 		await generateTailwindConfig(projectPath, projectType);
 		await generatePostCSSConfig(projectPath);
 	}

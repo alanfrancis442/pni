@@ -17,7 +17,7 @@ export default function Summary({features, projectPath}: Props) {
 			<Text>Project Type: {features.projectType}</Text>
 			{features.projectName && <Text>Project Name: {features.projectName}</Text>}
 			<Text>Three.js: {features.threejs ? 'Yes' : 'No'}</Text>
-			<Text>CSS Variables: {features.cssVars ? 'Yes' : 'No'}</Text>
+			<Text>CSS Variables: Yes (auto-generated after shadcn-setup)</Text>
 			<Text>Project Path: {projectPath}</Text>
 			<Text> </Text>
 			<Text color="cyan">Next steps:</Text>

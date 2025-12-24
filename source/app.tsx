@@ -6,6 +6,7 @@ import {detectPackageManager, getInstallCommand, getDevInstallCommand} from './u
 import {getDependencies} from './utils/dependencies.js';
 import {generateConfigFiles} from './utils/config-generator.js';
 import {generateCSSVariables} from './utils/css-variables.js';
+import {setupShadcnNuxt} from './utils/shadcn-setup.js';
 import FeatureSelector, {type SelectedFeatures} from './components/FeatureSelector.js';
 import ProgressIndicator from './components/ProgressIndicator.js';
 import Summary from './components/Summary.js';
@@ -115,8 +116,18 @@ export default function App({
 				selectedFeatures.cssVars,
 			);
 
-			// Generate CSS variables if needed
-			if (selectedFeatures.cssVars) {
+			// Generate CSS variables (always enabled - will be overwritten after shadcn-setup)
+			if (finalProjectType === 'nuxt') {
+				// For Nuxt, first create basic tailwind.css
+				await generateCSSVariables(finalProjectType as 'nuxt' | 'vue', workingPath, true);
+				
+				// Then run shadcn setup
+				setStep('configuring');
+				await setupShadcnNuxt(workingPath, pm);
+				
+				// Finally, replace with full CSS content
+				await generateCSSVariables(finalProjectType as 'nuxt' | 'vue', workingPath, false);
+			} else {
 				await generateCSSVariables(finalProjectType as 'nuxt' | 'vue', workingPath);
 			}
 
