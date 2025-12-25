@@ -4,7 +4,7 @@ export interface DependencySet {
 }
 
 export const BASE_NUXT_DEPS: DependencySet = {
-	production: [],
+	production: ['@vueuse/core', '@nuxtjs/seo'],
 	dev: [],
 };
 
@@ -14,8 +14,8 @@ export const BASE_VUE_DEPS: DependencySet = {
 };
 
 export const THREEJS_NUXT_DEPS: DependencySet = {
-	production: ['three', '@vueuse/core', '@tresjs/nuxt'],
-	dev: [],
+	production: ['three', '@vueuse/core', 'postprocessing'],
+	dev: ['@types/three'],
 };
 
 export const THREEJS_VUE_DEPS: DependencySet = {
@@ -29,7 +29,7 @@ export const CSS_VARS_DEPS: DependencySet = {
 };
 
 export const CSS_VARS_NUXT_DEPS: DependencySet = {
-	production: ['@vueuse/core', '@nuxtjs/seo'],
+	production: [],
 	dev: ['typescript', 'tailwindcss', '@tailwindcss/vite'],
 };
 
@@ -39,9 +39,17 @@ export function getDependencies(
 	cssVars: boolean,
 ): DependencySet {
 	const deps: DependencySet = {
-		production: [],
+		production: ['gsap','lenis'],
 		dev: [],
 	};
+
+	if (projectType === 'nuxt') {
+		deps.production.push(...BASE_NUXT_DEPS.production);
+		deps.dev.push(...BASE_NUXT_DEPS.dev);
+	} else {
+		deps.production.push(...BASE_VUE_DEPS.production);
+		deps.dev.push(...BASE_VUE_DEPS.dev);
+	}
 
 	if (threejs) {
 		if (projectType === 'nuxt') {
