@@ -11,10 +11,18 @@ export async function setupShadcnNuxt(
 	const execCommand = isPnpm ? 'pnpm dlx' : 'npx';
 
 	// Step 1: Create initial tailwind.css with basic import
-	const tailwindCssPath1 = join(projectPath, 'app', 'assets', 'css', 'tailwind.css');
+	const tailwindCssPath1 = join(
+		projectPath,
+		'app',
+		'assets',
+		'css',
+		'tailwind.css',
+	);
 	const tailwindCssPath2 = join(projectPath, 'assets', 'css', 'tailwind.css');
-	const tailwindCssPath = existsSync(join(projectPath, 'app')) ? tailwindCssPath1 : tailwindCssPath2;
-	
+	const tailwindCssPath = existsSync(join(projectPath, 'app'))
+		? tailwindCssPath1
+		: tailwindCssPath2;
+
 	mkdirSync(dirname(tailwindCssPath), {recursive: true});
 	writeFileSync(tailwindCssPath, '@import "tailwindcss";\n', 'utf-8');
 
@@ -27,7 +35,9 @@ export async function setupShadcnNuxt(
 	// Step 3: Create SSR width plugin
 	const pluginPath1 = join(projectPath, 'app', 'plugins', 'ssr-width.ts');
 	const pluginPath2 = join(projectPath, 'plugins', 'ssr-width.ts');
-	const pluginPath = existsSync(join(projectPath, 'app')) ? pluginPath1 : pluginPath2;
+	const pluginPath = existsSync(join(projectPath, 'app'))
+		? pluginPath1
+		: pluginPath2;
 	mkdirSync(dirname(pluginPath), {recursive: true});
 	const pluginContent = `import { provideSSRWidth } from '@vueuse/core'
 
@@ -55,4 +65,3 @@ export default defineNuxtPlugin((nuxtApp) => {
 		stdio: 'inherit',
 	});
 }
-

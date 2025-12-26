@@ -37,4 +37,3 @@ export async function createApp(
 		throw new Error('Cannot create app: project type must be nuxt or vue');
 	}
 }
-

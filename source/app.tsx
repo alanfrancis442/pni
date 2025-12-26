@@ -2,12 +2,18 @@ import React, {useState, useEffect} from 'react';
 import {Box, Text} from 'ink';
 import {detectProjectType} from './utils/project-detection.js';
 import {createApp} from './utils/app-creation.js';
-import {detectPackageManager, getInstallCommand, getDevInstallCommand} from './utils/package-manager.js';
+import {
+	detectPackageManager,
+	getInstallCommand,
+	getDevInstallCommand,
+} from './utils/package-manager.js';
 import {getDependencies} from './utils/dependencies.js';
 import {generateConfigFiles} from './utils/config-generator.js';
 import {generateCSSVariables} from './utils/css-variables.js';
 import {setupShadcnNuxt} from './utils/shadcn-setup.js';
-import FeatureSelector, {type SelectedFeatures} from './components/FeatureSelector.js';
+import FeatureSelector, {
+	type SelectedFeatures,
+} from './components/FeatureSelector.js';
 import ProgressIndicator from './components/ProgressIndicator.js';
 import Summary from './components/Summary.js';
 import {execSync} from 'child_process';
@@ -40,7 +46,9 @@ export default function App({
 	nonInteractive = false,
 }: Props) {
 	const [step, setStep] = useState<Step>('detecting');
-	const [projectType, setProjectType] = useState<'nuxt' | 'vue' | 'none'>('none');
+	const [projectType, setProjectType] = useState<'nuxt' | 'vue' | 'none'>(
+		'none',
+	);
 	const [features, setFeatures] = useState<SelectedFeatures | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [projectPath, setProjectPath] = useState<string>('');
@@ -68,10 +76,10 @@ export default function App({
 		const finalProjectType = nuxt
 			? 'nuxt'
 			: vue
-				? 'vue'
-				: selectedFeatures.projectType === 'none'
-					? 'nuxt' // Default to nuxt if none selected
-					: selectedFeatures.projectType;
+			? 'vue'
+			: selectedFeatures.projectType === 'none'
+			? 'nuxt' // Default to nuxt if none selected
+			: selectedFeatures.projectType;
 
 		// finalProjectType is guaranteed to be 'nuxt' or 'vue' at this point
 
@@ -83,7 +91,11 @@ export default function App({
 			if (projectType === 'none' && selectedFeatures.projectName) {
 				setStep('creating');
 				const parentDir = dir ? resolve(dir) : process.cwd();
-				await createApp(finalProjectType as 'nuxt' | 'vue', parentDir, selectedFeatures.projectName);
+				await createApp(
+					finalProjectType as 'nuxt' | 'vue',
+					parentDir,
+					selectedFeatures.projectName,
+				);
 				workingPath = join(parentDir, selectedFeatures.projectName);
 				setProjectPath(workingPath);
 			}
@@ -119,16 +131,27 @@ export default function App({
 			// Generate CSS variables (always enabled - will be overwritten after shadcn-setup)
 			if (finalProjectType === 'nuxt') {
 				// For Nuxt, first create basic tailwind.css
-				await generateCSSVariables(finalProjectType as 'nuxt' | 'vue', workingPath, true);
-				
+				await generateCSSVariables(
+					finalProjectType as 'nuxt' | 'vue',
+					workingPath,
+					true,
+				);
+
 				// Then run shadcn setup
 				setStep('configuring');
 				await setupShadcnNuxt(workingPath, pm);
-				
+
 				// Finally, replace with full CSS content
-				await generateCSSVariables(finalProjectType as 'nuxt' | 'vue', workingPath, false);
+				await generateCSSVariables(
+					finalProjectType as 'nuxt' | 'vue',
+					workingPath,
+					false,
+				);
 			} else {
-				await generateCSSVariables(finalProjectType as 'nuxt' | 'vue', workingPath);
+				await generateCSSVariables(
+					finalProjectType as 'nuxt' | 'vue',
+					workingPath,
+				);
 			}
 
 			setStep('completed');
@@ -141,7 +164,10 @@ export default function App({
 	if (step === 'detecting') {
 		return (
 			<Box>
-				<ProgressIndicator message="Detecting project type..." status="in-progress" />
+				<ProgressIndicator
+					message="Detecting project type..."
+					status="in-progress"
+				/>
 			</Box>
 		);
 	}
@@ -170,7 +196,10 @@ export default function App({
 	if (step === 'installing') {
 		return (
 			<Box flexDirection="column">
-				<ProgressIndicator message="Installing dependencies..." status="in-progress" />
+				<ProgressIndicator
+					message="Installing dependencies..."
+					status="in-progress"
+				/>
 			</Box>
 		);
 	}
@@ -178,7 +207,10 @@ export default function App({
 	if (step === 'configuring') {
 		return (
 			<Box flexDirection="column">
-				<ProgressIndicator message="Generating configuration files..." status="in-progress" />
+				<ProgressIndicator
+					message="Generating configuration files..."
+					status="in-progress"
+				/>
 			</Box>
 		);
 	}

@@ -4,7 +4,13 @@ export interface DependencySet {
 }
 
 export const BASE_NUXT_DEPS: DependencySet = {
-	production: ['@vueuse/core', '@nuxtjs/seo', '@nuxt/image', '@nuxtjs/device', 'shadcn-nuxt'],
+	production: [
+		'@vueuse/core',
+		'@nuxtjs/seo',
+		'@nuxt/image',
+		'@nuxtjs/device',
+		'shadcn-nuxt',
+	],
 	dev: [],
 };
 
@@ -39,7 +45,7 @@ export function getDependencies(
 	cssVars: boolean,
 ): DependencySet {
 	const deps: DependencySet = {
-		production: ['gsap','lenis'],
+		production: ['gsap', 'lenis'],
 		dev: [],
 	};
 
@@ -77,4 +83,3 @@ export function getDependencies(
 
 	return deps;
 }
-

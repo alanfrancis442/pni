@@ -3,10 +3,18 @@ import {join} from 'path';
 
 export type ProjectType = 'nuxt' | 'vue' | 'none';
 
-export async function detectProjectType(cwd: string = process.cwd()): Promise<ProjectType> {
+export async function detectProjectType(
+	cwd: string = process.cwd(),
+): Promise<ProjectType> {
 	// Check for Nuxt project
-	const nuxtConfigFiles = ['nuxt.config.ts', 'nuxt.config.js', 'nuxt.config.mjs'];
-	const hasNuxtConfig = nuxtConfigFiles.some(file => existsSync(join(cwd, file)));
+	const nuxtConfigFiles = [
+		'nuxt.config.ts',
+		'nuxt.config.js',
+		'nuxt.config.mjs',
+	];
+	const hasNuxtConfig = nuxtConfigFiles.some(file =>
+		existsSync(join(cwd, file)),
+	);
 
 	if (hasNuxtConfig) {
 		return 'nuxt';
@@ -17,7 +25,10 @@ export async function detectProjectType(cwd: string = process.cwd()): Promise<Pr
 	if (existsSync(packageJsonPath)) {
 		try {
 			const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-			const deps = {...packageJson.dependencies, ...packageJson.devDependencies};
+			const deps = {
+				...packageJson.dependencies,
+				...packageJson.devDependencies,
+			};
 			if (deps.nuxt || deps['@nuxt/kit']) {
 				return 'nuxt';
 			}
@@ -27,9 +38,15 @@ export async function detectProjectType(cwd: string = process.cwd()): Promise<Pr
 	}
 
 	// Check for Vue project
-	const viteConfigFiles = ['vite.config.ts', 'vite.config.js', 'vite.config.mjs'];
+	const viteConfigFiles = [
+		'vite.config.ts',
+		'vite.config.js',
+		'vite.config.mjs',
+	];
 	const vueConfigFiles = ['vue.config.js', 'vue.config.ts'];
-	const hasViteConfig = viteConfigFiles.some(file => existsSync(join(cwd, file)));
+	const hasViteConfig = viteConfigFiles.some(file =>
+		existsSync(join(cwd, file)),
+	);
 	const hasVueConfig = vueConfigFiles.some(file => existsSync(join(cwd, file)));
 
 	if (hasViteConfig || hasVueConfig) {
@@ -40,7 +57,10 @@ export async function detectProjectType(cwd: string = process.cwd()): Promise<Pr
 	if (existsSync(packageJsonPath)) {
 		try {
 			const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-			const deps = {...packageJson.dependencies, ...packageJson.devDependencies};
+			const deps = {
+				...packageJson.dependencies,
+				...packageJson.devDependencies,
+			};
 			if (deps.vue && !deps.nuxt) {
 				return 'vue';
 			}
@@ -51,4 +71,3 @@ export async function detectProjectType(cwd: string = process.cwd()): Promise<Pr
 
 	return 'none';
 }
-

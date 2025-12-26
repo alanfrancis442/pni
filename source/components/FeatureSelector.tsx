@@ -29,7 +29,13 @@ export default function FeatureSelector({
 }: Props) {
 	const [step, setStep] = useState(0);
 	const [projectType, setProjectType] = useState<ProjectType>(
-		flags.nuxt ? 'nuxt' : flags.vue ? 'vue' : detectedType !== 'none' ? detectedType : 'nuxt',
+		flags.nuxt
+			? 'nuxt'
+			: flags.vue
+			? 'vue'
+			: detectedType !== 'none'
+			? detectedType
+			: 'nuxt',
 	);
 	const [threejs, setThreejs] = useState(flags.threejs ?? false);
 	const [projectName, setProjectName] = useState('');
@@ -91,7 +97,13 @@ export default function FeatureSelector({
 		}
 
 		// Handle project name input
-		if (step === 1 && detectedType === 'none' && !key.return && !key.upArrow && !key.downArrow) {
+		if (
+			step === 1 &&
+			detectedType === 'none' &&
+			!key.return &&
+			!key.upArrow &&
+			!key.downArrow
+		) {
 			if (key.backspace || key.delete) {
 				setProjectName(prev => prev.slice(0, -1));
 			} else if (input.length === 1) {
@@ -103,7 +115,8 @@ export default function FeatureSelector({
 	if (nonInteractive) {
 		return (
 			<Text>
-				Using flags: {projectType} | Three.js: {threejs ? 'Yes' : 'No'} | CSS Vars: Yes (auto)
+				Using flags: {projectType} | Three.js: {threejs ? 'Yes' : 'No'} | CSS
+				Vars: Yes (auto)
 			</Text>
 		);
 	}
@@ -113,14 +126,8 @@ export default function FeatureSelector({
 			return (
 				<>
 					<Text>No project detected. Select project type:</Text>
-					<Text>
-						{' '}
-						{projectType === 'nuxt' ? '→' : ' '} Nuxt
-					</Text>
-					<Text>
-						{' '}
-						{projectType === 'vue' ? '→' : ' '} Vue
-					</Text>
+					<Text> {projectType === 'nuxt' ? '→' : ' '} Nuxt</Text>
+					<Text> {projectType === 'vue' ? '→' : ' '} Vue</Text>
 					<Text>Press Enter to continue</Text>
 				</>
 			);
@@ -145,10 +152,7 @@ export default function FeatureSelector({
 					{' '}
 					{threejs ? '→' : ' '} [{threejs ? 'x' : ' '}] Yes
 				</Text>
-				<Text>
-					{' '}
-					{!threejs ? '→' : ' '} [ ] No
-				</Text>
+				<Text> {!threejs ? '→' : ' '} [ ] No</Text>
 				<Text>Use ↑/↓ to toggle, y/n to select, or Enter to continue</Text>
 			</>
 		);
@@ -156,4 +160,3 @@ export default function FeatureSelector({
 
 	return <Text>Processing...</Text>;
 }
-

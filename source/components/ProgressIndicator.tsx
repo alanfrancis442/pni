@@ -6,7 +6,10 @@ type Props = {
 	status?: 'pending' | 'in-progress' | 'completed' | 'error';
 };
 
-export default function ProgressIndicator({message, status = 'in-progress'}: Props) {
+export default function ProgressIndicator({
+	message,
+	status = 'in-progress',
+}: Props) {
 	const getStatusIcon = () => {
 		switch (status) {
 			case 'completed':
@@ -28,4 +31,3 @@ export default function ProgressIndicator({message, status = 'in-progress'}: Pro
 		</Box>
 	);
 }
-

@@ -19,7 +19,8 @@
 		"execa": "^8.0.1",
 		"ink": "^4.1.0",
 		"meow": "^11.0.0",
-		"react": "^18.2.0"
+		"react": "^18.2.0",
+		"react-devtools-core": "^4.28.5"
 	},
 	"devDependencies": {
 		"@sindresorhus/tsconfig": "^3.0.1",

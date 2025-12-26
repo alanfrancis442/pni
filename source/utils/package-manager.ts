@@ -4,7 +4,9 @@ import {execSync} from 'child_process';
 
 export type PackageManager = 'npm' | 'pnpm' | 'yarn';
 
-export async function detectPackageManager(cwd: string = process.cwd()): Promise<PackageManager> {
+export async function detectPackageManager(
+	cwd: string = process.cwd(),
+): Promise<PackageManager> {
 	// Check for lock files
 	if (existsSync(join(cwd, 'pnpm-lock.yaml'))) {
 		return 'pnpm';
@@ -37,7 +39,10 @@ export async function detectPackageManager(cwd: string = process.cwd()): Promise
 	return 'npm';
 }
 
-export function getInstallCommand(pm: PackageManager, packages: string[]): string {
+export function getInstallCommand(
+	pm: PackageManager,
+	packages: string[],
+): string {
 	const packageList = packages.join(' ');
 	switch (pm) {
 		case 'pnpm':
@@ -50,7 +55,10 @@ export function getInstallCommand(pm: PackageManager, packages: string[]): strin
 	}
 }
 
-export function getDevInstallCommand(pm: PackageManager, packages: string[]): string {
+export function getDevInstallCommand(
+	pm: PackageManager,
+	packages: string[],
+): string {
 	const packageList = packages.join(' ');
 	switch (pm) {
 		case 'pnpm':
@@ -62,4 +70,3 @@ export function getDevInstallCommand(pm: PackageManager, packages: string[]): st
 			return `npm install --save-dev ${packageList}`;
 	}
 }
-

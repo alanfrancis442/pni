@@ -14,17 +14,34 @@ export async function generateNuxtConfig(
 		configContent = readFileSync(configPath, 'utf-8');
 	} else {
 		// Generate full config template
-		const modules: string[] = ['shadcn-nuxt', '@nuxtjs/seo', '@nuxt/image', '@nuxtjs/device'];
+		const modules: string[] = [
+			'shadcn-nuxt',
+			'@nuxtjs/seo',
+			'@nuxt/image',
+			'@nuxtjs/device',
+		];
 		if (threejs) {
 			modules.push('@tresjs/nuxt');
 		}
 
-		const tailwindCssPath1 = join(projectPath, 'app', 'assets', 'css', 'tailwind.css');
+		const tailwindCssPath1 = join(
+			projectPath,
+			'app',
+			'assets',
+			'css',
+			'tailwind.css',
+		);
 		const tailwindCssPath2 = join(projectPath, 'assets', 'css', 'tailwind.css');
-		const tailwindCssPath = existsSync(join(projectPath, 'app')) ? tailwindCssPath1 : tailwindCssPath2;
-		const cssImport = tailwindCssPath.includes('app/') ? '~/app/assets/css/tailwind.css' : '~/assets/css/tailwind.css';
+		const tailwindCssPath = existsSync(join(projectPath, 'app'))
+			? tailwindCssPath1
+			: tailwindCssPath2;
+		const cssImport = tailwindCssPath.includes('app/')
+			? '~/app/assets/css/tailwind.css'
+			: '~/assets/css/tailwind.css';
 
-		const tailwindImport = cssVars ? "import tailwindcss from '@tailwindcss/vite'\n\n" : '';
+		const tailwindImport = cssVars
+			? "import tailwindcss from '@tailwindcss/vite'\n\n"
+			: '';
 
 		configContent = `${tailwindImport}// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -63,7 +80,9 @@ ${cssVars ? `  css: ['${cssImport}'],\n\n` : ''}  ssr: true,
     },
   },
 
-${cssVars ? `  vite: {
+${
+	cssVars
+		? `  vite: {
     plugins: [tailwindcss()],
     esbuild: {
       drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
@@ -74,7 +93,9 @@ ${cssVars ? `  vite: {
     }
   },
 
-` : ''}  nitro: {
+`
+		: ''
+}  nitro: {
     compressPublicAssets: {
       brotli: true,
       gzip: true,
@@ -106,12 +127,16 @@ ${cssVars ? `  vite: {
   },
 
   // UI Framework: Shadcn
-${cssVars ? `  shadcn: {
+${
+	cssVars
+		? `  shadcn: {
     prefix: '',
     componentDir: '@/components/ui',
   },
 
-` : ''}  ogImage: {
+`
+		: ''
+}  ogImage: {
     defaults: {
       component: 'OgImageTemplate',
       props: {
@@ -174,11 +199,21 @@ ${cssVars ? `  shadcn: {
 
 	// Add CSS import if cssVars is true
 	if (cssVars) {
-		const tailwindCssPath1 = join(projectPath, 'app', 'assets', 'css', 'tailwind.css');
+		const tailwindCssPath1 = join(
+			projectPath,
+			'app',
+			'assets',
+			'css',
+			'tailwind.css',
+		);
 		const tailwindCssPath2 = join(projectPath, 'assets', 'css', 'tailwind.css');
-		const tailwindCssPath = existsSync(join(projectPath, 'app')) ? tailwindCssPath1 : tailwindCssPath2;
-		const cssImport = tailwindCssPath.includes('app/') ? '~/app/assets/css/tailwind.css' : '~/assets/css/tailwind.css';
-		
+		const tailwindCssPath = existsSync(join(projectPath, 'app'))
+			? tailwindCssPath1
+			: tailwindCssPath2;
+		const cssImport = tailwindCssPath.includes('app/')
+			? '~/app/assets/css/tailwind.css'
+			: '~/assets/css/tailwind.css';
+
 		if (!configContent.includes('import tailwindcss')) {
 			configContent = `import tailwindcss from '@tailwindcss/vite'\n\n${configContent}`;
 		}
@@ -374,7 +409,7 @@ ${cssVars ? `  shadcn: {
 
 export async function generateViteConfig(
 	projectPath: string,
-  //@ts-ignore
+	//@ts-ignore
 	threejs: boolean,
 ): Promise<void> {
 	const configPath = join(projectPath, 'vite.config.ts');
@@ -408,8 +443,16 @@ export async function generateTailwindConfig(
 	const configContent = `/** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    ${projectType === 'nuxt' ? "'./components/**/*.{js,vue,ts}'," : "'./index.html',"}
-    ${projectType === 'nuxt' ? "'./layouts/**/*.vue'," : "'./src/**/*.{vue,js,ts,jsx,tsx}',"}
+    ${
+			projectType === 'nuxt'
+				? "'./components/**/*.{js,vue,ts}',"
+				: "'./index.html',"
+		}
+    ${
+			projectType === 'nuxt'
+				? "'./layouts/**/*.vue',"
+				: "'./src/**/*.{vue,js,ts,jsx,tsx}',"
+		}
     ${projectType === 'nuxt' ? "'./pages/**/*.vue'," : ''}
     ${projectType === 'nuxt' ? "'./plugins/**/*.{js,ts}'," : ''}
     ${projectType === 'nuxt' ? "'./app.vue'," : ''}
@@ -466,7 +509,9 @@ export default {
 	writeFileSync(configPath, configContent, 'utf-8');
 }
 
-export async function generatePostCSSConfig(projectPath: string): Promise<void> {
+export async function generatePostCSSConfig(
+	projectPath: string,
+): Promise<void> {
 	const configPath = join(projectPath, 'postcss.config.js');
 	const configContent = `export default {
   plugins: {
@@ -498,4 +543,3 @@ export async function generateConfigFiles(
 		await generatePostCSSConfig(projectPath);
 	}
 }
-

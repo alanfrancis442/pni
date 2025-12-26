@@ -247,4 +247,3 @@ export async function generateCSSVariables(
 		writeFileSync(cssPath, CSS_VARIABLES_CONTENT.trim() + '\n', 'utf-8');
 	}
 }
-

@@ -3,11 +3,13 @@ import React from 'react';
 import {render} from 'ink';
 import meow from 'meow';
 import App from './app.js';
-
+import AddThreeApp from './add-three-app.js';
+// import { render as renderTestingLibrary } from 'ink-testing-library';
 const cli = meow(
 	`
 	Usage
 	  $ pni [options]
+	  $ pni add three [options]
 
 	Options
 	  --nuxt              Force Nuxt project type
@@ -29,6 +31,9 @@ const cli = meow(
 
 	  $ pni --css-vars
 	  Add CSS variables to existing project
+
+	  $ pni add three
+	  Add Three.js template to existing project
 `,
 	{
 		importMeta: import.meta,
@@ -60,13 +65,20 @@ const cli = meow(
 	},
 );
 
-render(
-	<App
-		nuxt={cli.flags.nuxt}
-		vue={cli.flags.vue}
-		threejs={cli.flags.threejs}
-		cssVars={cli.flags.cssVars}
-		dir={cli.flags.dir}
-		nonInteractive={cli.flags.nonInteractive}
-	/>,
-);
+// Check for subcommands
+const [command, subcommand] = cli.input;
+
+if (command === 'add' && subcommand === 'three') {
+	render(<AddThreeApp dir={cli.flags.dir} />);
+} else {
+	render(
+		<App
+			nuxt={cli.flags.nuxt}
+			vue={cli.flags.vue}
+			threejs={cli.flags.threejs}
+			cssVars={cli.flags.cssVars}
+			dir={cli.flags.dir}
+			nonInteractive={cli.flags.nonInteractive}
+		/>,
+	);
+}
