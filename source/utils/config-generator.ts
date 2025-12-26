@@ -13,14 +13,130 @@ export async function generateNuxtConfig(
 	if (existsSync(configPath)) {
 		configContent = readFileSync(configPath, 'utf-8');
 	} else {
-		configContent = `// https://nuxt.com/docs/api/configuration/nuxt-config
+		// Generate full config template
+		const modules: string[] = ['shadcn-nuxt', '@nuxtjs/seo', '@nuxt/image', '@nuxtjs/device'];
+		if (threejs) {
+			modules.push('@tresjs/nuxt');
+		}
+
+		const tailwindCssPath1 = join(projectPath, 'app', 'assets', 'css', 'tailwind.css');
+		const tailwindCssPath2 = join(projectPath, 'assets', 'css', 'tailwind.css');
+		const tailwindCssPath = existsSync(join(projectPath, 'app')) ? tailwindCssPath1 : tailwindCssPath2;
+		const cssImport = tailwindCssPath.includes('app/') ? '~/app/assets/css/tailwind.css' : '~/assets/css/tailwind.css';
+
+		const tailwindImport = cssVars ? "import tailwindcss from '@tailwindcss/vite'\n\n" : '';
+
+		configContent = `${tailwindImport}// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  devtools: { enabled: true }
+  // 1. Updated to a realistic 2024/2025 date for Nuxt 4 features
+  compatibilityDate: '2024-11-01',
+  devtools: { enabled: true },
+
+${cssVars ? `  css: ['${cssImport}'],\n\n` : ''}  ssr: true,
+
+
+  // SEO: Centralizing data
+  site: {
+    name: 'New Setup',
+    url: 'https://newsetup.com',
+    description: 'A new setup for your project',
+    defaultLocale: 'en',
+  },
+
+  // App Config for UI-wide settings
+  app: {
+    head: {
+      charset: 'utf-8',
+      viewport: 'width=device-width, initial-scale=1',
+      meta: [
+        { name: 'description', content: 'A new setup for your project' },
+        { name: 'author', content: 'New Setup' },
+        { property: 'og:type', content: 'website' },
+        { name: 'msapplication-TileColor', content: '#000000' },
+        { name: 'theme-color', content: '#000000' },
+      ],
+      link: [
+        // { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        // { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon-180x180.png' },
+        // { rel: 'manifest', href: '/manifest.webmanifest' },
+      ],
+    },
+  },
+
+${cssVars ? `  vite: {
+    plugins: [tailwindcss()],
+    esbuild: {
+      drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    },
+    build: {
+      // Ensures CSS is also minified correctly by lightningcss (default in Vite 6)
+      cssMinify: 'lightningcss'
+    }
+  },
+
+` : ''}  nitro: {
+    compressPublicAssets: {
+      brotli: true,
+      gzip: true,
+    },
+    // Enable crawling for SEO module compatibility
+    prerender: {
+      //  set to true for production
+      crawlLinks: false,
+      routes: ['/']
+    }
+  },
+
+  modules: [${modules.map(m => `'${m}'`).join(', ')}],
+
+
+  //  Image Optimization
+  image: {
+    quality: 95,
+    format: ['webp'],
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1200,
+      xl: 1400,
+      xxl: 1800,
+      '2xl': 2000,
+    },
+  },
+
+  // UI Framework: Shadcn
+${cssVars ? `  shadcn: {
+    prefix: '',
+    componentDir: '@/components/ui',
+  },
+
+` : ''}  ogImage: {
+    defaults: {
+      component: 'OgImageTemplate',
+      props: {
+        title: 'New Setup',
+        description: 'A new setup for your project',
+        image: 'https://newsetup.com/og-image.png',
+      },
+    }
+  },
+  robots: {
+    disallow: ['/api',],
+  },
+
+
+
+  sitemap: {
+    // sources: ['/api/__sitemap__/urls'] // Fetch from API
+  },
 })
 `;
+		writeFileSync(configPath, configContent, 'utf-8');
+		return;
 	}
 
-	// Build modules array
+	// If config exists, merge new modules and settings
 	const modules: string[] = [];
 	if (threejs && !configContent.includes('@tresjs/nuxt')) {
 		modules.push('@tresjs/nuxt');
@@ -31,13 +147,28 @@ export default defineNuxtConfig({
 	if (!configContent.includes('@nuxtjs/seo')) {
 		modules.push('@nuxtjs/seo');
 	}
+	if (!configContent.includes('@nuxt/image')) {
+		modules.push('@nuxt/image');
+	}
+	if (!configContent.includes('@nuxtjs/device')) {
+		modules.push('@nuxtjs/device');
+	}
 
 	// Add compatibilityDate if not present
 	if (!configContent.includes('compatibilityDate')) {
 		configContent = configContent.replace(
 			/export default defineNuxtConfig\(\{/,
 			`export default defineNuxtConfig({
-  compatibilityDate: '2025-07-15',`,
+  // 1. Updated to a realistic 2024/2025 date for Nuxt 4 features
+  compatibilityDate: '2024-11-01',`,
+		);
+	}
+
+	// Add ssr if not present
+	if (!configContent.includes('ssr:')) {
+		configContent = configContent.replace(
+			/compatibilityDate:\s*'[^']*',/,
+			`$&\n  ssr: true,`,
 		);
 	}
 
@@ -48,11 +179,14 @@ export default defineNuxtConfig({
 		const tailwindCssPath = existsSync(join(projectPath, 'app')) ? tailwindCssPath1 : tailwindCssPath2;
 		const cssImport = tailwindCssPath.includes('app/') ? '~/app/assets/css/tailwind.css' : '~/assets/css/tailwind.css';
 		
+		if (!configContent.includes('import tailwindcss')) {
+			configContent = `import tailwindcss from '@tailwindcss/vite'\n\n${configContent}`;
+		}
+
 		if (!configContent.includes('css:')) {
 			configContent = configContent.replace(
-				/export default defineNuxtConfig\(\{/,
-				`export default defineNuxtConfig({
-  css: ['${cssImport}'],`,
+				/devtools:\s*\{[^}]*\},/,
+				`$&\n\n  css: ['${cssImport}'],`,
 			);
 		} else if (!configContent.includes(cssImport)) {
 			configContent = configContent.replace(
@@ -64,16 +198,18 @@ export default defineNuxtConfig({
 
 	// Add vite plugins for Tailwind if cssVars is true
 	if (cssVars && !configContent.includes('@tailwindcss/vite')) {
-		if (!configContent.includes('import tailwindcss')) {
-			configContent = `import tailwindcss from '@tailwindcss/vite'\n\n${configContent}`;
-		}
-
 		if (!configContent.includes('vite:')) {
 			configContent = configContent.replace(
-				/export default defineNuxtConfig\(\{/,
-				`export default defineNuxtConfig({
-  vite: {
+				/ssr:\s*true,/,
+				`$&\n\n  vite: {
     plugins: [tailwindcss()],
+    esbuild: {
+      drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
+    },
+    build: {
+      // Ensures CSS is also minified correctly by lightningcss (default in Vite 6)
+      cssMinify: 'lightningcss'
+    }
   },`,
 			);
 		} else if (!configContent.includes('tailwindcss()')) {
@@ -108,18 +244,83 @@ export default defineNuxtConfig({
 		} else {
 			// Add new modules array
 			configContent = configContent.replace(
-				/export default defineNuxtConfig\(\{/,
-				`export default defineNuxtConfig({
-  modules: [${modules.map(m => `'${m}'`).join(', ')}],`,
+				/ssr:\s*true,/,
+				`$&\n\n  modules: [${modules.map(m => `'${m}'`).join(', ')}],`,
 			);
 		}
+	}
+
+	// Add app.head config if not present
+	if (!configContent.includes('app:')) {
+		configContent = configContent.replace(
+			/site:\s*\{[^}]*\},/,
+			`$&\n\n  // App Config for UI-wide settings
+  app: {
+    head: {
+      charset: 'utf-8',
+      viewport: 'width=device-width, initial-scale=1',
+      meta: [
+        { name: 'description', content: 'A new setup for your project' },
+        { name: 'author', content: 'New Setup' },
+        { property: 'og:type', content: 'website' },
+        { name: 'msapplication-TileColor', content: '#000000' },
+        { name: 'theme-color', content: '#000000' },
+      ],
+      link: [
+        // { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        // { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon-180x180.png' },
+        // { rel: 'manifest', href: '/manifest.webmanifest' },
+      ],
+    },
+  },`,
+		);
+	}
+
+	// Add nitro config if not present
+	if (!configContent.includes('nitro:')) {
+		configContent = configContent.replace(
+			/vite:\s*\{[^}]*\},/,
+			`$&\n\n  nitro: {
+    compressPublicAssets: {
+      brotli: true,
+      gzip: true,
+    },
+    // Enable crawling for SEO module compatibility
+    prerender: {
+      //  set to true for production
+      crawlLinks: false,
+      routes: ['/']
+    }
+  },`,
+		);
+	}
+
+	// Add image config if not present
+	if (!configContent.includes('image:')) {
+		configContent = configContent.replace(
+			/modules:\s*\[[^\]]*\],/,
+			`$&\n\n  //  Image Optimization
+  image: {
+    quality: 95,
+    format: ['webp'],
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1200,
+      xl: 1400,
+      xxl: 1800,
+      '2xl': 2000,
+    },
+  },`,
+		);
 	}
 
 	// Add shadcn config if cssVars is true
 	if (cssVars && !configContent.includes('shadcn:')) {
 		configContent = configContent.replace(
-			/export default defineNuxtConfig\(\{/,
-			`export default defineNuxtConfig({
+			/image:\s*\{[^}]*\},/,
+			`$&\n\n  // UI Framework: Shadcn
   shadcn: {
     prefix: '',
     componentDir: '@/components/ui',
@@ -127,32 +328,43 @@ export default defineNuxtConfig({
 		);
 	}
 
-	// Add SEO config if not present
+	// Update site config if not present
 	if (!configContent.includes('site:')) {
 		configContent = configContent.replace(
-			/export default defineNuxtConfig\(\{/,
-			`export default defineNuxtConfig({
+			/compatibilityDate:\s*'[^']*',/,
+			`$&\n\n  // SEO: Centralizing data
   site: {
     name: 'New Setup',
     url: 'https://newsetup.com',
     description: 'A new setup for your project',
-    image: 'https://newsetup.com/og-image.png',
-  },
-  ogImage: {
+    defaultLocale: 'en',
+  },`,
+		);
+	}
+
+	// Update ogImage config if not present
+	if (!configContent.includes('ogImage:')) {
+		configContent = configContent.replace(
+			/sitemap:\s*\{[^}]*\},/,
+			`$&\n  ogImage: {
     defaults: {
-      component: 'OgImage',
+      component: 'OgImageTemplate',
       props: {
         title: 'New Setup',
         description: 'A new setup for your project',
         image: 'https://newsetup.com/og-image.png',
       },
     }
-  },
-  robots: {
-    disallow: ['/api'],
-  },
-  sitemap: {
-    // sources: ['/api/__sitemap__/urls'] // Fetch from API
+  },`,
+		);
+	}
+
+	// Update robots config if not present
+	if (!configContent.includes('robots:')) {
+		configContent = configContent.replace(
+			/ogImage:\s*\{[^}]*\},/,
+			`$&\n  robots: {
+    disallow: ['/api',],
   },`,
 		);
 	}

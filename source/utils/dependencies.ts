@@ -4,7 +4,7 @@ export interface DependencySet {
 }
 
 export const BASE_NUXT_DEPS: DependencySet = {
-	production: ['@vueuse/core', '@nuxtjs/seo'],
+	production: ['@vueuse/core', '@nuxtjs/seo', '@nuxt/image', '@nuxtjs/device', 'shadcn-nuxt'],
 	dev: [],
 };
 
