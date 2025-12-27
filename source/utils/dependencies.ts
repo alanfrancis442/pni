@@ -31,7 +31,7 @@ export const THREEJS_VUE_DEPS: DependencySet = {
 
 export const CSS_VARS_DEPS: DependencySet = {
 	production: [],
-	dev: ['tailwindcss', 'postcss', 'autoprefixer'],
+	dev: ['tailwindcss', '@tailwindcss/vite'],
 };
 
 export const CSS_VARS_NUXT_DEPS: DependencySet = {

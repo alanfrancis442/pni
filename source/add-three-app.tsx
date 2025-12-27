@@ -17,6 +17,8 @@ export default function AddThreeApp({dir}: Props) {
 		directoryName: string;
 		appFolder: string;
 		threePath: string;
+		projectType: 'nuxt' | 'vue';
+		fileExtension: 'js' | 'ts';
 	} | null>(null);
 
 	useEffect(() => {
@@ -79,13 +81,22 @@ export default function AddThreeApp({dir}: Props) {
 				<Text> </Text>
 				<Text>Files created:</Text>
 				<Text> • {result.threePath}/ (template files)</Text>
-				<Text> • composables/{result.directoryName}/usethree.ts</Text>
-				<Text> • composables/{result.directoryName}/useThreeAdvanced.ts</Text>
+				<Text>
+					{' '}
+					• {result.projectType === 'vue' ? 'src' : 'app'}/composables/
+					{result.directoryName}/usethree.{result.fileExtension}
+				</Text>
+				<Text>
+					{' '}
+					• {result.projectType === 'vue' ? 'src' : 'app'}/composables/
+					{result.directoryName}/useThreeAdvanced.{result.fileExtension}
+				</Text>
 				<Text> </Text>
 				<Text color="cyan">Next steps:</Text>
 				<Text>
 					{' '}
-					1. Import and use the composable in your Vue/Nuxt component
+					1. Import and use the composable in your{' '}
+					{result.projectType === 'vue' ? 'Vue' : 'Nuxt'} component
 				</Text>
 				<Text>
 					{' '}

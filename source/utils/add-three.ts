@@ -1,27 +1,43 @@
 import {existsSync, readFileSync, writeFileSync, mkdirSync, cpSync} from 'fs';
 import {join, dirname, basename, resolve, relative} from 'path';
 import {fileURLToPath} from 'url';
+import {detectProjectType} from './project-detection.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /**
- * Find app folder by looking for app directory going up the directory tree
+ * Find app folder by looking for app directory going up the directory tree (Nuxt)
+ * or src folder (Vue)
  */
-function findAppFolder(startPath: string): string {
+function findComposablesFolder(startPath: string, projectType: 'nuxt' | 'vue'): string {
 	let currentPath = resolve(startPath);
 
 	while (currentPath !== dirname(currentPath)) {
-		const appPath = join(currentPath, 'app');
-		if (existsSync(appPath)) {
-			return appPath;
+		if (projectType === 'nuxt') {
+			const appPath = join(currentPath, 'app');
+			if (existsSync(appPath)) {
+				return join(appPath, 'composables');
+			}
+		} else {
+			// Vue project
+			const srcPath = join(currentPath, 'src');
+			if (existsSync(srcPath)) {
+				return join(srcPath, 'composables');
+			}
 		}
 		currentPath = dirname(currentPath);
 	}
 
-	throw new Error(
-		'app folder not found. Please run this command in a Nuxt project with an app directory.',
-	);
+	if (projectType === 'nuxt') {
+		throw new Error(
+			'app folder not found. Please run this command in a Nuxt project with an app directory.',
+		);
+	} else {
+		throw new Error(
+			'src folder not found. Please run this command in a Vue project.',
+		);
+	}
 }
 
 /**
@@ -61,8 +77,19 @@ export async function addThree(
 		);
 	}
 
-	// Find app folder
-	const appFolder = findAppFolder(currentPath);
+	// Detect project type
+	const projectType = await detectProjectType(projectRoot);
+	if (projectType !== 'nuxt' && projectType !== 'vue') {
+		throw new Error(
+			'Project type not supported. Please run this command in a Nuxt or Vue project.',
+		);
+	}
+
+	// Find composables folder (app/composables for Nuxt, src/composables for Vue)
+	const composablesFolder = findComposablesFolder(currentPath, projectType);
+	const appFolder = projectType === 'nuxt' 
+		? join(composablesFolder, '..') // app folder
+		: join(composablesFolder, '..'); // src folder
 
 	// Get template directory path
 	// When compiled: dist/utils/add-three.js -> dist/template_code/three
@@ -100,35 +127,43 @@ export async function addThree(
 
 	cpSync(templateDir, targetDir, {recursive: true});
 
-	// Create composables/{directoryName} inside app folder
-	const composablesDir = join(appFolder, 'composables');
-	const composablesTargetDir = join(composablesDir, directoryName);
-
-	if (!existsSync(composablesDir)) {
-		mkdirSync(composablesDir, {recursive: true});
-	}
+	// Create composables/{directoryName} inside app/src folder
+	const composablesTargetDir = join(composablesFolder, directoryName);
 
 	if (!existsSync(composablesTargetDir)) {
 		mkdirSync(composablesTargetDir, {recursive: true});
 	}
 
-	// Calculate import path from app/composables/{directoryName} to three folder
-	// In Nuxt, @/ resolves to project root, so we use the path relative to project root
+	// Calculate import path from composables/{directoryName} to three folder
+	// In Nuxt/Vue, @/ resolves to project root (Nuxt) or src (Vue), so we use the path relative to project root
 	const threePathRelative = relative(projectRoot, targetDir).replace(
 		/\\/g,
 		'/',
 	);
 	const importPath = `@/${threePathRelative}/World.js`;
 
-	// Create usethree.ts
-	const useThreePath = join(composablesTargetDir, 'usethree.ts');
-	const useThreeContent = `import { ref, onMounted, onBeforeUnmount, markRaw, nextTick, type Ref } from 'vue';
+	// Determine file extension based on project type
+	const fileExtension = projectType === 'vue' ? 'js' : 'ts';
+
+	// Create usethree.{js|ts}
+	const useThreePath = join(composablesTargetDir, `usethree.${fileExtension}`);
+	// Type annotations only for TypeScript
+	const typeAnnotations = projectType === 'nuxt' 
+		? `: Ref<HTMLElement | null>` 
+		: '';
+	const typeImports = projectType === 'nuxt'
+		? `, type Ref`
+		: '';
+	const worldType = projectType === 'nuxt' ? `<World | null>` : '';
+	const errorType = projectType === 'nuxt' ? `<Error | null>` : '';
+
+	const useThreeContent = `import { ref, onMounted, onBeforeUnmount, markRaw, nextTick${typeImports} } from 'vue';
 import { World } from '${importPath}';
 
-export function useThree(containerRef: Ref<HTMLElement | null>) {
-  const world = ref<World | null>(null);
+export function useThree(containerRef${typeAnnotations}) {
+  const world = ref${worldType}(null);
   const isLoading = ref(true);
-  const error = ref<Error | null>(null);
+  const error = ref${errorType}(null);
 
   const init = async () => {
     if (!containerRef.value) {
@@ -183,29 +218,34 @@ export function useThree(containerRef: Ref<HTMLElement | null>) {
 
 	writeFileSync(useThreePath, useThreeContent, 'utf-8');
 
-	// Create useThreeAdvanced.ts
+	// Create useThreeAdvanced.{js|ts}
 	const useThreeAdvancedPath = join(
 		composablesTargetDir,
-		'useThreeAdvanced.ts',
+		`useThreeAdvanced.${fileExtension}`,
 	);
-	const useThreeAdvancedContent = `import { ref, onMounted, onBeforeUnmount, markRaw, nextTick, type Ref } from 'vue';
+	
+	const threeTypeImports = projectType === 'nuxt'
+		? `import type { Scene, Camera, WebGLRenderer } from 'three';`
+		: '';
+	
+	const useThreeAdvancedContent = `import { ref, onMounted, onBeforeUnmount, markRaw, nextTick${typeImports} } from 'vue';
 import { World } from '${importPath}';
-import type { Scene, Camera, WebGLRenderer } from 'three';
+${threeTypeImports}
 
 /**
  * Advanced Three.js composable with more control and access to internals
  * Use this when you need direct access to scene, camera, renderer, etc.
  */
-export function useThreeAdvanced(containerRef: Ref<HTMLElement | null>) {
-  const world = ref<World | null>(null);
+export function useThreeAdvanced(containerRef${typeAnnotations}) {
+  const world = ref${worldType}(null);
   const isLoading = ref(true);
-  const error = ref<Error | null>(null);
+  const error = ref${errorType}(null);
   const isRunning = ref(false);
 
   // Getters for Three.js internals
-  const scene = ref<Scene | null>(null);
-  const camera = ref<Camera | null>(null);
-  const renderer = ref<WebGLRenderer | null>(null);
+  const scene = ref${projectType === 'nuxt' ? '<Scene | null>' : ''}(null);
+  const camera = ref${projectType === 'nuxt' ? '<Camera | null>' : ''}(null);
+  const renderer = ref${projectType === 'nuxt' ? '<WebGLRenderer | null>' : ''}(null);
 
   const init = async () => {
     if (!containerRef.value) {
@@ -223,7 +263,7 @@ export function useThreeAdvanced(containerRef: Ref<HTMLElement | null>) {
       world.value.init();
       
       // Store references and mark Three.js objects as non-reactive
-      scene.value = markRaw(world.value.scene as Scene);
+      scene.value = markRaw(world.value.scene${projectType === 'nuxt' ? ' as Scene' : ''});
       camera.value = markRaw(world.value.camera);
       renderer.value = markRaw(world.value.renderer);
       
@@ -294,5 +334,7 @@ export function useThreeAdvanced(containerRef: Ref<HTMLElement | null>) {
 		directoryName,
 		appFolder,
 		threePath: targetDir,
+		projectType,
+		fileExtension,
 	};
 }

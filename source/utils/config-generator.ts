@@ -4,7 +4,7 @@ import type {ProjectType} from './project-detection.js';
 
 export async function generateNuxtConfig(
 	projectPath: string,
- //@ts-ignore
+	//@ts-ignore
 	threejs: boolean,
 	cssVars: boolean,
 ): Promise<void> {
@@ -22,8 +22,8 @@ export async function generateNuxtConfig(
 			'@nuxtjs/device',
 		];
 
-		// Always use app/assets/css/tailwind.css for Nuxt projects
-		const cssImport = '~/app/assets/css/tailwind.css';
+		// Use assets/css/tailwind.css for Nuxt projects
+		const cssImport = '~/assets/css/tailwind.css';
 
 		const tailwindImport = cssVars
 			? "import tailwindcss from '@tailwindcss/vite'\n\n"
@@ -120,6 +120,7 @@ ${
     componentDir: '@/components/ui',
   },
 
+
 `
 		: ''
 }  ogImage: {
@@ -182,8 +183,8 @@ ${
 
 	// Add CSS import if cssVars is true
 	if (cssVars) {
-		// Always use app/assets/css/tailwind.css for Nuxt projects
-		const cssImport = '~/app/assets/css/tailwind.css';
+		// Use assets/css/tailwind.css for Nuxt projects
+		const cssImport = '~/assets/css/tailwind.css';
 
 		if (!configContent.includes('import tailwindcss')) {
 			configContent = `import tailwindcss from '@tailwindcss/vite'\n\n${configContent}`;
@@ -382,26 +383,127 @@ export async function generateViteConfig(
 	projectPath: string,
 	//@ts-ignore
 	threejs: boolean,
+	cssVars: boolean = false,
 ): Promise<void> {
 	const configPath = join(projectPath, 'vite.config.ts');
 	let configContent = '';
 
 	if (existsSync(configPath)) {
 		configContent = readFileSync(configPath, 'utf-8');
+		
+		// If cssVars is enabled and tailwindcss plugin is not present, add it
+		if (cssVars && !configContent.includes('@tailwindcss/vite')) {
+			// Add import
+			if (!configContent.includes("import tailwindcss from '@tailwindcss/vite'")) {
+				configContent = configContent.replace(
+					/import { defineConfig } from 'vite'/,
+					"import { defineConfig } from 'vite'\nimport tailwindcss from '@tailwindcss/vite'",
+				);
+			}
+			
+			// Add to plugins array
+			if (configContent.includes('plugins: [')) {
+				configContent = configContent.replace(
+					/plugins:\s*\[/,
+					'plugins: [\n      tailwindcss(),',
+				);
+			}
+		}
 	} else {
-		configContent = `import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+		const threejsChunk = threejs
+			? `              // If you use heavy libs (like Three.js), split them too
+              if (id.includes('three')) return 'three-vendor';`
+			: '';
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [vue()],
+		const tailwindImport = cssVars
+			? "import tailwindcss from '@tailwindcss/vite'\n"
+			: '';
+
+		const tailwindPlugin = cssVars ? '      tailwindcss(),\n' : '';
+
+		configContent = `import { fileURLToPath, URL } from 'node:url'
+${tailwindImport}import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vueDevTools from 'vite-plugin-vue-devtools'
+import viteCompression from 'vite-plugin-compression'
+import Sitemap from 'vite-plugin-sitemap'
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
+
+export default defineConfig(({ mode }) => {
+  const isProd = mode === 'production'
+
+  return {
+    plugins: [
+      vue(),
+${tailwindPlugin}      // 1. Only load DevTools in development
+      !isProd && vueDevTools(),
+
+      ViteImageOptimizer({
+        test: /\\.(jpe?g|png|gif|tiff|webp|svg|avif)$/i,
+        includePublic: true,
+        logStats: true,
+        png: { quality: 75 },
+        jpeg: { quality: 75 },
+        jpg: { quality: 75 },
+        webp: { lossless: false, quality: 75 },
+        avif: { quality: 70 },
+      }),
+
+      Sitemap({
+        hostname: 'https://newsetup.com', // Don't forget to update this!
+        dynamicRoutes: [],
+      }),
+
+      // 2. Gzip Compression (Universal Fallback)
+      viteCompression({
+        algorithm: 'gzip',
+        ext: '.gz',
+        threshold: 10240,
+        deleteOriginFile: false,
+      }),
+
+      // 3. Brotli Compression (Modern Performance)
+      viteCompression({
+        algorithm: 'brotliCompress',
+        ext: '.br',
+        threshold: 10240,
+        deleteOriginFile: false,
+      }),
+    ],
+
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      },
+    },
+
+    build: {
+      cssMinify: 'lightningcss', // Ensure 'lightningcss' is in package.json
+      // 4. Split Chunks for better Browser Caching
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              // Split standard Vue dependencies into their own chunk
+              if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
+                return 'vue-vendor';
+              }
+${threejsChunk}
+              
+              return 'vendor';
+            }
+          },
+        },
+      },
+    },
+
+    esbuild: {
+      drop: isProd ? ['console', 'debugger'] : [],
+    },
+  }
 })
 `;
 	}
-
-	// For Vue projects with Three.js, we might need to add optimizations
-	// The actual Three.js setup would be done in the Vue app itself
-	// This is a placeholder for any Vite-specific Three.js optimizations
 
 	writeFileSync(configPath, configContent, 'utf-8');
 }
@@ -504,13 +606,8 @@ export async function generateConfigFiles(
 	if (projectType === 'nuxt') {
 		await generateNuxtConfig(projectPath, threejs, cssVars);
 	} else if (projectType === 'vue') {
-		await generateViteConfig(projectPath, threejs);
+		await generateViteConfig(projectPath, threejs, cssVars);
 	}
 
-	if (cssVars && projectType !== 'nuxt') {
-		// Only generate Tailwind config for Vue projects
-		// Nuxt uses @tailwindcss/vite which doesn't need this
-		await generateTailwindConfig(projectPath, projectType);
-		await generatePostCSSConfig(projectPath);
-	}
+	// Note: Vue projects with @tailwindcss/vite don't need tailwind.config.js or postcss.config.js
 }

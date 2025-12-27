@@ -9,7 +9,7 @@ import {
 } from './utils/package-manager.js';
 import {getDependencies} from './utils/dependencies.js';
 import {generateConfigFiles} from './utils/config-generator.js';
-import {generateCSSVariables} from './utils/css-variables.js';
+import {generateCSSVariables, updateIndexHtml} from './utils/css-variables.js';
 import {setupShadcnNuxt} from './utils/shadcn-setup.js';
 import FeatureSelector, {
 	type SelectedFeatures,
@@ -152,6 +152,11 @@ export default function App({
 					finalProjectType as 'nuxt' | 'vue',
 					workingPath,
 				);
+				
+				// For Vue projects, update index.html with stylesheet link
+				if (finalProjectType === 'vue' && selectedFeatures.cssVars) {
+					await updateIndexHtml(workingPath);
+				}
 			}
 
 			setStep('completed');

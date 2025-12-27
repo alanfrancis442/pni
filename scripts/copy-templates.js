@@ -16,4 +16,3 @@ try {
 	console.error('Error copying template files:', error);
 	process.exit(1);
 }
-
