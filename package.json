@@ -1,19 +1,37 @@
 {
 	"name": "pni",
-	"version": "0.0.0",
+	"version": "1.0.0",
+	"description": "CLI tool for creating Nuxt/Vue projects with Three.js and CSS variables setup",
 	"license": "MIT",
-	"bin": "dist/cli.js",
+	"bin": {
+		"pni": "dist/cli.js"
+	},
 	"type": "module",
+	"main": "dist/cli.js",
 	"engines": {
 		"node": ">=16"
 	},
 	"scripts": {
-		"build": "tsc",
+		"build": "tsc && npm run copy-templates",
+		"copy-templates": "node scripts/copy-templates.js",
 		"dev": "tsc --watch",
-		"test": "prettier --check . && xo && ava"
+		"test": "prettier --check . && xo && ava",
+		"prepublishOnly": "npm run build"
 	},
 	"files": [
 		"dist"
+	],
+	"keywords": [
+		"nuxt",
+		"vue",
+		"threejs",
+		"three.js",
+		"cli",
+		"scaffold",
+		"generator",
+		"tailwind",
+		"css-variables",
+		"shadcn"
 	],
 	"dependencies": {
 		"execa": "^8.0.1",
