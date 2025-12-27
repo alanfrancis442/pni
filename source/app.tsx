@@ -9,7 +9,7 @@ import {
 } from './utils/package-manager.js';
 import {getDependencies} from './utils/dependencies.js';
 import {generateConfigFiles} from './utils/config-generator.js';
-import {generateCSSVariables, updateIndexHtml} from './utils/css-variables.js';
+import {generateCSSVariables, updateIndexHtml, createTypographyPage} from './utils/css-variables.js';
 import {setupShadcnNuxt} from './utils/shadcn-setup.js';
 import FeatureSelector, {
 	type SelectedFeatures,
@@ -147,6 +147,11 @@ export default function App({
 					workingPath,
 					false,
 				);
+
+				// Create typography page after CSS variables are set up
+				if (selectedFeatures.cssVars) {
+					await createTypographyPage(workingPath);
+				}
 			} else {
 				await generateCSSVariables(
 					finalProjectType as 'nuxt' | 'vue',
