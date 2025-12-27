@@ -55,7 +55,7 @@ export async function addThree(
 	const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
 	const deps = {...packageJson.dependencies, ...packageJson.devDependencies};
 
-	if (!deps.three && !deps['@tresjs/nuxt']) {
+	if (!deps.three) {
 		throw new Error(
 			'Three.js is not installed. Please install it first: npm install three',
 		);

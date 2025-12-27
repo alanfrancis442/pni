@@ -1,4 +1,4 @@
-import {writeFileSync, mkdirSync, existsSync} from 'fs';
+import {writeFileSync, mkdirSync, } from 'fs';
 import {join, dirname} from 'path';
 import type {ProjectType} from './project-detection.js';
 
@@ -227,10 +227,8 @@ export async function generateCSSVariables(
 	let cssPath: string;
 
 	if (projectType === 'nuxt') {
-		// Nuxt: app/assets/css/tailwind.css or assets/css/tailwind.css
-		const nuxtPath1 = join(projectPath, 'app', 'assets', 'css', 'tailwind.css');
-		const nuxtPath2 = join(projectPath, 'assets', 'css', 'tailwind.css');
-		cssPath = existsSync(nuxtPath1) ? nuxtPath1 : nuxtPath2;
+		// Nuxt: always use app/assets/css/tailwind.css
+		cssPath = join(projectPath, 'app', 'assets', 'css', 'tailwind.css');
 	} else {
 		// Vue: app/assets/main.css
 		cssPath = join(projectPath, 'app', 'assets', 'main.css');

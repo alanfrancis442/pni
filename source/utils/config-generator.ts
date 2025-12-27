@@ -4,6 +4,7 @@ import type {ProjectType} from './project-detection.js';
 
 export async function generateNuxtConfig(
 	projectPath: string,
+ //@ts-ignore
 	threejs: boolean,
 	cssVars: boolean,
 ): Promise<void> {
@@ -20,24 +21,9 @@ export async function generateNuxtConfig(
 			'@nuxt/image',
 			'@nuxtjs/device',
 		];
-		if (threejs) {
-			modules.push('@tresjs/nuxt');
-		}
 
-		const tailwindCssPath1 = join(
-			projectPath,
-			'app',
-			'assets',
-			'css',
-			'tailwind.css',
-		);
-		const tailwindCssPath2 = join(projectPath, 'assets', 'css', 'tailwind.css');
-		const tailwindCssPath = existsSync(join(projectPath, 'app'))
-			? tailwindCssPath1
-			: tailwindCssPath2;
-		const cssImport = tailwindCssPath.includes('app/')
-			? '~/app/assets/css/tailwind.css'
-			: '~/assets/css/tailwind.css';
+		// Always use app/assets/css/tailwind.css for Nuxt projects
+		const cssImport = '~/app/assets/css/tailwind.css';
 
 		const tailwindImport = cssVars
 			? "import tailwindcss from '@tailwindcss/vite'\n\n"
@@ -163,9 +149,6 @@ ${
 
 	// If config exists, merge new modules and settings
 	const modules: string[] = [];
-	if (threejs && !configContent.includes('@tresjs/nuxt')) {
-		modules.push('@tresjs/nuxt');
-	}
 	if (cssVars && !configContent.includes('shadcn-nuxt')) {
 		modules.push('shadcn-nuxt');
 	}
@@ -199,20 +182,8 @@ ${
 
 	// Add CSS import if cssVars is true
 	if (cssVars) {
-		const tailwindCssPath1 = join(
-			projectPath,
-			'app',
-			'assets',
-			'css',
-			'tailwind.css',
-		);
-		const tailwindCssPath2 = join(projectPath, 'assets', 'css', 'tailwind.css');
-		const tailwindCssPath = existsSync(join(projectPath, 'app'))
-			? tailwindCssPath1
-			: tailwindCssPath2;
-		const cssImport = tailwindCssPath.includes('app/')
-			? '~/app/assets/css/tailwind.css'
-			: '~/assets/css/tailwind.css';
+		// Always use app/assets/css/tailwind.css for Nuxt projects
+		const cssImport = '~/app/assets/css/tailwind.css';
 
 		if (!configContent.includes('import tailwindcss')) {
 			configContent = `import tailwindcss from '@tailwindcss/vite'\n\n${configContent}`;

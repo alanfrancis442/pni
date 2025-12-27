@@ -25,7 +25,7 @@ export const THREEJS_NUXT_DEPS: DependencySet = {
 };
 
 export const THREEJS_VUE_DEPS: DependencySet = {
-	production: ['three', '@vueuse/core', '@tresjs/core', '@tresjs/cientos'],
+	production: ['three', '@vueuse/core'],
 	dev: [],
 };
 

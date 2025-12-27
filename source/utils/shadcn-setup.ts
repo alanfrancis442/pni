@@ -11,17 +11,14 @@ export async function setupShadcnNuxt(
 	const execCommand = isPnpm ? 'pnpm dlx' : 'npx';
 
 	// Step 1: Create initial tailwind.css with basic import
-	const tailwindCssPath1 = join(
+	// Always use app/assets/css/tailwind.css for Nuxt projects
+	const tailwindCssPath = join(
 		projectPath,
 		'app',
 		'assets',
 		'css',
 		'tailwind.css',
 	);
-	const tailwindCssPath2 = join(projectPath, 'assets', 'css', 'tailwind.css');
-	const tailwindCssPath = existsSync(join(projectPath, 'app'))
-		? tailwindCssPath1
-		: tailwindCssPath2;
 
 	mkdirSync(dirname(tailwindCssPath), {recursive: true});
 	writeFileSync(tailwindCssPath, '@import "tailwindcss";\n', 'utf-8');
