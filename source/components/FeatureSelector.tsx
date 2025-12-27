@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {Text, useInput} from 'ink';
+import {Text, Box, useInput} from 'ink';
 import type {ProjectType} from '../utils/project-detection.js';
 
 export interface SelectedFeatures {
@@ -114,49 +114,107 @@ export default function FeatureSelector({
 
 	if (nonInteractive) {
 		return (
-			<Text>
-				Using flags: {projectType} | Three.js: {threejs ? 'Yes' : 'No'} | CSS
-				Vars: Yes (auto)
-			</Text>
+			<Box flexDirection="column" padding={1}>
+				<Text color="cyan" bold>⚡ Quick Setup (Non-Interactive)</Text>
+				<Text> </Text>
+				<Box flexDirection="column" paddingLeft={2}>
+					<Text>
+						<Text color="magenta">Project Type:</Text> <Text color="green" bold>{projectType}</Text>
+					</Text>
+					<Text>
+						<Text color="magenta">Three.js:</Text> <Text color={threejs ? 'green' : 'gray'} bold>{threejs ? 'Yes' : 'No'}</Text>
+					</Text>
+					<Text>
+						<Text color="magenta">CSS Vars:</Text> <Text color="green" bold>Yes (auto)</Text>
+					</Text>
+				</Box>
+			</Box>
 		);
 	}
 
 	if (detectedType === 'none') {
 		if (step === 0) {
 			return (
-				<>
-					<Text>No project detected. Select project type:</Text>
-					<Text> {projectType === 'nuxt' ? '→' : ' '} Nuxt</Text>
-					<Text> {projectType === 'vue' ? '→' : ' '} Vue</Text>
-					<Text>Press Enter to continue</Text>
-				</>
+				<Box flexDirection="column" padding={1}>
+					<Text color="yellow" bold>📦 No project detected</Text>
+					<Text color="gray">Select project type:</Text>
+					<Text> </Text>
+					<Box flexDirection="column" paddingLeft={2}>
+						<Text>
+							<Text color={projectType === 'nuxt' ? 'cyan' : 'gray'}>
+								{projectType === 'nuxt' ? '→' : ' '} 
+							</Text>
+							<Text color={projectType === 'nuxt' ? 'cyan' : 'white'} bold>
+								[<Text color={projectType === 'nuxt' ? 'green' : 'gray'}>{projectType === 'nuxt' ? '●' : '○'}</Text>] Nuxt
+							</Text>
+						</Text>
+						<Text>
+							<Text color={projectType === 'vue' ? 'cyan' : 'gray'}>
+								{projectType === 'vue' ? '→' : ' '} 
+							</Text>
+							<Text color={projectType === 'vue' ? 'cyan' : 'white'} bold>
+								[<Text color={projectType === 'vue' ? 'green' : 'gray'}>{projectType === 'vue' ? '●' : '○'}</Text>] Vue
+							</Text>
+						</Text>
+					</Box>
+					<Text> </Text>
+					<Text color="gray">Press <Text color="cyan">↑/↓</Text> to select, <Text color="cyan">Enter</Text> to continue</Text>
+				</Box>
 			);
 		}
 
 		if (step === 1) {
 			return (
-				<>
-					<Text>Enter project name: </Text>
-					<Text color="green">{projectName}</Text>
-					<Text>_</Text>
-				</>
+				<Box flexDirection="column" padding={1}>
+					<Text color="cyan" bold>📝 Project Setup</Text>
+					<Text> </Text>
+					<Text>
+						<Text color="magenta">Enter project name:</Text> <Text color="green" bold>{projectName}</Text>
+						<Text color="cyan" bold>_</Text>
+					</Text>
+					<Text> </Text>
+					<Text color="gray">Type the project name and press <Text color="cyan">Enter</Text> when done</Text>
+				</Box>
 			);
 		}
 	}
 
 	if (step === (detectedType === 'none' ? 2 : 0)) {
 		return (
-			<>
-				<Text>Include Three.js setup?</Text>
-				<Text>
-					{' '}
-					{threejs ? '→' : ' '} [{threejs ? 'x' : ' '}] Yes
+			<Box flexDirection="column" padding={1}>
+				<Text color="cyan" bold>🎨 Additional Features</Text>
+				<Text> </Text>
+				<Text color="yellow" bold>Include Three.js setup?</Text>
+				<Text> </Text>
+				<Box flexDirection="column" paddingLeft={2}>
+					<Text>
+						<Text color={threejs ? 'cyan' : 'gray'}>
+							{threejs ? '→' : ' '} 
+						</Text>
+						<Text color={threejs ? 'cyan' : 'white'} bold>
+							[<Text color={threejs ? 'green' : 'gray'}>{threejs ? '✓' : ' '}</Text>] <Text color={threejs ? 'green' : 'white'}>Yes</Text>
+						</Text>
+					</Text>
+					<Text>
+						<Text color={!threejs ? 'cyan' : 'gray'}>
+							{!threejs ? '→' : ' '} 
+						</Text>
+						<Text color={!threejs ? 'cyan' : 'white'} bold>
+							[<Text color={!threejs ? 'red' : 'gray'}>{!threejs ? '✗' : ' '}</Text>] <Text color={!threejs ? 'red' : 'white'}>No</Text>
+						</Text>
+					</Text>
+				</Box>
+				<Text> </Text>
+				<Text color="gray">
+					Use <Text color="cyan">↑/↓</Text> to toggle, <Text color="cyan">y/n</Text> to select, or <Text color="cyan">Enter</Text> to continue
 				</Text>
-				<Text> {!threejs ? '→' : ' '} [ ] No</Text>
-				<Text>Use ↑/↓ to toggle, y/n to select, or Enter to continue</Text>
-			</>
+			</Box>
 		);
 	}
 
-	return <Text>Processing...</Text>;
+	return (
+		<Box>
+			<Text color="cyan">Processing...</Text>
+		</Box>
+	);
 }

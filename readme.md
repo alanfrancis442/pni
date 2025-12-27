@@ -83,6 +83,32 @@ pni add three
 - **Package Manager Detection**: Automatically detects and uses npm, pnpm, or yarn
 - **Interactive CLI**: Beautiful terminal UI with progress indicators
 
+## Development
+
+### Using React DevTools
+
+This project uses Ink for the CLI interface, which supports React DevTools for debugging.
+
+To use React DevTools:
+
+1. **Start React DevTools** in a separate terminal:
+   ```bash
+   npx react-devtools
+   ```
+
+2. **Run your CLI with DEV mode enabled**:
+   ```bash
+   npm run dev:cli [options]
+   ```
+
+   Or manually:
+   ```bash
+   npm run build
+   DEV=true node dist/cli.js [options]
+   ```
+
+The React DevTools window will show your CLI component tree, allowing you to inspect props, state, and component hierarchy in real-time.
+
 ## Requirements
 
 - Node.js >= 16

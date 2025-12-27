@@ -41,7 +41,9 @@ export default function AddThreeApp({dir}: Props) {
 
 	if (step === 'checking') {
 		return (
-			<Box>
+			<Box flexDirection="column" padding={1}>
+				<Text color="cyan" bold>🔍 Three.js Setup</Text>
+				<Text> </Text>
 				<ProgressIndicator
 					message="Checking Three.js installation..."
 					status="in-progress"
@@ -52,9 +54,11 @@ export default function AddThreeApp({dir}: Props) {
 
 	if (step === 'copying') {
 		return (
-			<Box flexDirection="column">
+			<Box flexDirection="column" padding={1}>
+				<Text color="cyan" bold>📦 Adding Three.js Template</Text>
+				<Text> </Text>
 				<ProgressIndicator
-					message="Adding Three.js template..."
+					message="Copying template files..."
 					status="in-progress"
 				/>
 			</Box>
@@ -63,46 +67,62 @@ export default function AddThreeApp({dir}: Props) {
 
 	if (step === 'error') {
 		return (
-			<Box flexDirection="column">
-				<Text color="red" bold>
-					Error:
-				</Text>
-				<Text color="red">{error}</Text>
+			<Box flexDirection="column" padding={1}>
+				<Box borderStyle="round" borderColor="red" paddingX={2} paddingY={1} marginBottom={1}>
+					<Text color="red" bold>
+						✗ Error
+					</Text>
+				</Box>
+				<Box paddingLeft={2}>
+					<Text color="red">{error}</Text>
+				</Box>
 			</Box>
 		);
 	}
 
 	if (step === 'completed' && result) {
 		return (
-			<Box flexDirection="column">
-				<Text color="green" bold>
-					Three.js template added successfully!
-				</Text>
-				<Text> </Text>
-				<Text>Files created:</Text>
-				<Text> • {result.threePath}/ (template files)</Text>
-				<Text>
-					{' '}
-					• {result.projectType === 'vue' ? 'src' : 'app'}/composables/
-					{result.directoryName}/usethree.{result.fileExtension}
-				</Text>
-				<Text>
-					{' '}
-					• {result.projectType === 'vue' ? 'src' : 'app'}/composables/
-					{result.directoryName}/useThreeAdvanced.{result.fileExtension}
-				</Text>
-				<Text> </Text>
-				<Text color="cyan">Next steps:</Text>
-				<Text>
-					{' '}
-					1. Import and use the composable in your{' '}
-					{result.projectType === 'vue' ? 'Vue' : 'Nuxt'} component
-				</Text>
-				<Text>
-					{' '}
-					2. Example: import {'{'} useThree {'}'} from '@/composables/
-					{result.directoryName}/usethree'
-				</Text>
+			<Box flexDirection="column" padding={1}>
+				<Box borderStyle="round" borderColor="green" paddingX={2} paddingY={1} marginBottom={1}>
+					<Text color="green" bold>
+						✨ Three.js template added successfully!
+					</Text>
+				</Box>
+				
+				<Box flexDirection="column" paddingLeft={1}>
+					<Text color="cyan" bold>📁 Files Created</Text>
+					<Text> </Text>
+					<Box flexDirection="column" paddingLeft={2}>
+						<Text>
+							<Text color="yellow">•</Text> <Text color="white">{result.threePath}/</Text> <Text color="gray">(template files)</Text>
+						</Text>
+						<Text>
+							<Text color="yellow">•</Text> <Text color="white">{result.projectType === 'vue' ? 'src' : 'app'}/composables/</Text>
+							<Text color="green">{result.directoryName}/usethree.{result.fileExtension}</Text>
+						</Text>
+						<Text>
+							<Text color="yellow">•</Text> <Text color="white">{result.projectType === 'vue' ? 'src' : 'app'}/composables/</Text>
+							<Text color="green">{result.directoryName}/useThreeAdvanced.{result.fileExtension}</Text>
+						</Text>
+					</Box>
+					
+					<Text> </Text>
+					<Box borderStyle="single" borderColor="cyan" paddingX={1} paddingY={1}>
+						<Text color="cyan" bold>🚀 Next Steps</Text>
+						<Text> </Text>
+						<Box flexDirection="column" paddingLeft={2}>
+							<Text>
+								<Text color="yellow">1.</Text> <Text color="white">Import and use the composable in your </Text>
+								<Text color="green" bold>{result.projectType === 'vue' ? 'Vue' : 'Nuxt'}</Text>
+								<Text color="white"> component</Text>
+							</Text>
+							<Text>
+								<Text color="yellow">2.</Text> <Text color="gray">Example: </Text>
+								<Text color="cyan">import</Text> <Text color="yellow">{'{'} useThree {'}'}</Text> <Text color="cyan">from</Text> <Text color="green">'@/composables/{result.directoryName}/usethree'</Text>
+							</Text>
+						</Box>
+					</Box>
+				</Box>
 			</Box>
 		);
 	}

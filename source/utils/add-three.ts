@@ -61,7 +61,13 @@ function findProjectRoot(startPath: string): string {
 
 export async function addThree(
 	currentDir: string,
-): Promise<{directoryName: string; appFolder: string; threePath: string}> {
+): Promise<{
+	directoryName: string;
+	appFolder: string;
+	threePath: string;
+	projectType: 'nuxt' | 'vue';
+	fileExtension: 'js' | 'ts';
+}> {
 	const currentPath = resolve(currentDir);
 	const directoryName = basename(currentPath);
 

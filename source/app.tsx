@@ -16,6 +16,7 @@ import FeatureSelector, {
 } from './components/FeatureSelector.js';
 import ProgressIndicator from './components/ProgressIndicator.js';
 import Summary from './components/Summary.js';
+import WelcomeHeader from './components/WelcomeHeader.js';
 import {execSync} from 'child_process';
 import {join, resolve} from 'path';
 
@@ -173,7 +174,10 @@ export default function App({
 
 	if (step === 'detecting') {
 		return (
-			<Box>
+			<Box flexDirection="column" padding={1}>
+				<WelcomeHeader />
+				<Text color="cyan" bold>🔍 Analyzing project...</Text>
+				<Text> </Text>
 				<ProgressIndicator
 					message="Detecting project type..."
 					status="in-progress"
@@ -184,7 +188,8 @@ export default function App({
 
 	if (step === 'selecting') {
 		return (
-			<Box flexDirection="column">
+			<Box flexDirection="column" padding={1}>
+				<WelcomeHeader />
 				<FeatureSelector
 					detectedType={projectType}
 					onSelect={handleFeatureSelect}
@@ -197,17 +202,21 @@ export default function App({
 
 	if (step === 'creating') {
 		return (
-			<Box flexDirection="column">
-				<ProgressIndicator message="Creating project..." status="in-progress" />
+			<Box flexDirection="column" padding={1}>
+				<Text color="cyan" bold>📦 Creating project...</Text>
+				<Text> </Text>
+				<ProgressIndicator message="Setting up project structure..." status="in-progress" />
 			</Box>
 		);
 	}
 
 	if (step === 'installing') {
 		return (
-			<Box flexDirection="column">
+			<Box flexDirection="column" padding={1}>
+				<Text color="yellow" bold>📥 Installing dependencies...</Text>
+				<Text> </Text>
 				<ProgressIndicator
-					message="Installing dependencies..."
+					message="This may take a few moments..."
 					status="in-progress"
 				/>
 			</Box>
@@ -216,7 +225,9 @@ export default function App({
 
 	if (step === 'configuring') {
 		return (
-			<Box flexDirection="column">
+			<Box flexDirection="column" padding={1}>
+				<Text color="magenta" bold>⚙️  Configuring project...</Text>
+				<Text> </Text>
 				<ProgressIndicator
 					message="Generating configuration files..."
 					status="in-progress"
@@ -227,11 +238,15 @@ export default function App({
 
 	if (step === 'error') {
 		return (
-			<Box flexDirection="column">
-				<Text color="red" bold>
-					Error:
-				</Text>
-				<Text color="red">{error}</Text>
+			<Box flexDirection="column" padding={1}>
+				<Box borderStyle="round" borderColor="red" paddingX={2} paddingY={1} marginBottom={1}>
+					<Text color="red" bold>
+						✗ Error
+					</Text>
+				</Box>
+				<Box paddingLeft={2}>
+					<Text color="red">{error}</Text>
+				</Box>
 			</Box>
 		);
 	}
