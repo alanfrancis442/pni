@@ -284,8 +284,12 @@ export async function updateIndexHtml(projectPath: string): Promise<void> {
 	writeFileSync(indexPath, htmlContent, 'utf-8');
 }
 
-export async function createTypographyPage(projectPath: string): Promise<void> {
-	const typographyPagePath = join(projectPath, 'pages', 'typography', 'index.vue');
+export async function createTypographyPage(projectPath: string, projectType?: ProjectType): Promise<void> {
+	// For Nuxt, create in app/pages, for Vue use pages
+	const pagesDir = projectType === 'nuxt' 
+		? join(projectPath, 'app', 'pages')
+		: join(projectPath, 'pages');
+	const typographyPagePath = join(pagesDir, 'typography', 'index.vue');
 	
 	// Ensure directory exists
 	mkdirSync(dirname(typographyPagePath), {recursive: true});

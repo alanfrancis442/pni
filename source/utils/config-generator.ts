@@ -9,27 +9,24 @@ export async function generateNuxtConfig(
 	cssVars: boolean,
 ): Promise<void> {
 	const configPath = join(projectPath, 'nuxt.config.ts');
-	let configContent = '';
+	
+	// Always replace the config with the full template, regardless of whether it exists
+	// Generate full config template
+	const modules: string[] = [
+		'shadcn-nuxt',
+		'@nuxtjs/seo',
+		'@nuxt/image',
+		'@nuxtjs/device',
+	];
 
-	if (existsSync(configPath)) {
-		configContent = readFileSync(configPath, 'utf-8');
-	} else {
-		// Generate full config template
-		const modules: string[] = [
-			'shadcn-nuxt',
-			'@nuxtjs/seo',
-			'@nuxt/image',
-			'@nuxtjs/device',
-		];
+	// Use assets/css/tailwind.css for Nuxt projects
+	const cssImport = '~/assets/css/tailwind.css';
 
-		// Use assets/css/tailwind.css for Nuxt projects
-		const cssImport = '~/assets/css/tailwind.css';
+	const tailwindImport = cssVars
+		? "import tailwindcss from '@tailwindcss/vite'\n\n"
+		: '';
 
-		const tailwindImport = cssVars
-			? "import tailwindcss from '@tailwindcss/vite'\n\n"
-			: '';
-
-		configContent = `${tailwindImport}// https://nuxt.com/docs/api/configuration/nuxt-config
+	const configContent = `${tailwindImport}// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   // 1. Updated to a realistic 2024/2025 date for Nuxt 4 features
   compatibilityDate: '2024-11-01',
@@ -144,238 +141,8 @@ ${
   },
 })
 `;
-		writeFileSync(configPath, configContent, 'utf-8');
-		return;
-	}
 
-	// If config exists, merge new modules and settings
-	const modules: string[] = [];
-	if (cssVars && !configContent.includes('shadcn-nuxt')) {
-		modules.push('shadcn-nuxt');
-	}
-	if (!configContent.includes('@nuxtjs/seo')) {
-		modules.push('@nuxtjs/seo');
-	}
-	if (!configContent.includes('@nuxt/image')) {
-		modules.push('@nuxt/image');
-	}
-	if (!configContent.includes('@nuxtjs/device')) {
-		modules.push('@nuxtjs/device');
-	}
-
-	// Add compatibilityDate if not present
-	if (!configContent.includes('compatibilityDate')) {
-		configContent = configContent.replace(
-			/export default defineNuxtConfig\(\{/,
-			`export default defineNuxtConfig({
-  // 1. Updated to a realistic 2024/2025 date for Nuxt 4 features
-  compatibilityDate: '2024-11-01',`,
-		);
-	}
-
-	// Add ssr if not present
-	if (!configContent.includes('ssr:')) {
-		configContent = configContent.replace(
-			/compatibilityDate:\s*'[^']*',/,
-			`$&\n  ssr: true,`,
-		);
-	}
-
-	// Add CSS import if cssVars is true
-	if (cssVars) {
-		// Use assets/css/tailwind.css for Nuxt projects
-		const cssImport = '~/assets/css/tailwind.css';
-
-		if (!configContent.includes('import tailwindcss')) {
-			configContent = `import tailwindcss from '@tailwindcss/vite'\n\n${configContent}`;
-		}
-
-		if (!configContent.includes('css:')) {
-			configContent = configContent.replace(
-				/devtools:\s*\{[^}]*\},/,
-				`$&\n\n  css: ['${cssImport}'],`,
-			);
-		} else if (!configContent.includes(cssImport)) {
-			configContent = configContent.replace(
-				/css:\s*\[/,
-				`css: ['${cssImport}',`,
-			);
-		}
-	}
-
-	// Add vite plugins for Tailwind if cssVars is true
-	if (cssVars && !configContent.includes('@tailwindcss/vite')) {
-		if (!configContent.includes('vite:')) {
-			configContent = configContent.replace(
-				/ssr:\s*true,/,
-				`$&\n\n  vite: {
-    plugins: [tailwindcss()],
-    esbuild: {
-      drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
-    },
-    build: {
-      // Ensures CSS is also minified correctly by lightningcss (default in Vite 6)
-      cssMinify: 'lightningcss'
-    }
-  },`,
-			);
-		} else if (!configContent.includes('tailwindcss()')) {
-			configContent = configContent.replace(
-				/vite:\s*\{/,
-				`vite: {
-    plugins: [tailwindcss()],`,
-			);
-		}
-	}
-
-	// Add modules
-	if (modules.length > 0) {
-		if (configContent.includes('modules:')) {
-			// Add to existing modules array
-			const existingModules = configContent.match(/modules:\s*\[([^\]]*)\]/);
-			if (existingModules && existingModules[1]) {
-				const existingModuleList = existingModules[1].trim();
-				const allModules = [...modules];
-				if (existingModuleList) {
-					const existing = existingModuleList
-						.split(',')
-						.map(m => m.trim().replace(/['"]/g, ''));
-					allModules.push(...existing);
-				}
-				const uniqueModules = [...new Set(allModules)];
-				configContent = configContent.replace(
-					/modules:\s*\[[^\]]*\]/,
-					`modules: [${uniqueModules.map(m => `'${m}'`).join(', ')}]`,
-				);
-			}
-		} else {
-			// Add new modules array
-			configContent = configContent.replace(
-				/ssr:\s*true,/,
-				`$&\n\n  modules: [${modules.map(m => `'${m}'`).join(', ')}],`,
-			);
-		}
-	}
-
-	// Add app.head config if not present
-	if (!configContent.includes('app:')) {
-		configContent = configContent.replace(
-			/site:\s*\{[^}]*\},/,
-			`$&\n\n  // App Config for UI-wide settings
-  app: {
-    head: {
-      charset: 'utf-8',
-      viewport: 'width=device-width, initial-scale=1',
-      meta: [
-        { name: 'description', content: 'A new setup for your project' },
-        { name: 'author', content: 'New Setup' },
-        { property: 'og:type', content: 'website' },
-        { name: 'msapplication-TileColor', content: '#000000' },
-        { name: 'theme-color', content: '#000000' },
-      ],
-      link: [
-        // { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-        // { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon-180x180.png' },
-        // { rel: 'manifest', href: '/manifest.webmanifest' },
-      ],
-    },
-  },`,
-		);
-	}
-
-	// Add nitro config if not present
-	if (!configContent.includes('nitro:')) {
-		configContent = configContent.replace(
-			/vite:\s*\{[^}]*\},/,
-			`$&\n\n  nitro: {
-    compressPublicAssets: {
-      brotli: true,
-      gzip: true,
-    },
-    // Enable crawling for SEO module compatibility
-    prerender: {
-      //  set to true for production
-      crawlLinks: false,
-      routes: ['/']
-    }
-  },`,
-		);
-	}
-
-	// Add image config if not present
-	if (!configContent.includes('image:')) {
-		configContent = configContent.replace(
-			/modules:\s*\[[^\]]*\],/,
-			`$&\n\n  //  Image Optimization
-  image: {
-    quality: 95,
-    format: ['webp'],
-    screens: {
-      xs: 320,
-      sm: 640,
-      md: 768,
-      lg: 1200,
-      xl: 1400,
-      xxl: 1800,
-      '2xl': 2000,
-    },
-  },`,
-		);
-	}
-
-	// Add shadcn config if cssVars is true
-	if (cssVars && !configContent.includes('shadcn:')) {
-		configContent = configContent.replace(
-			/image:\s*\{[^}]*\},/,
-			`$&\n\n  // UI Framework: Shadcn
-  shadcn: {
-    prefix: '',
-    componentDir: '@/components/ui',
-  },`,
-		);
-	}
-
-	// Update site config if not present
-	if (!configContent.includes('site:')) {
-		configContent = configContent.replace(
-			/compatibilityDate:\s*'[^']*',/,
-			`$&\n\n  // SEO: Centralizing data
-  site: {
-    name: 'New Setup',
-    url: 'https://newsetup.com',
-    description: 'A new setup for your project',
-    defaultLocale: 'en',
-  },`,
-		);
-	}
-
-	// Update ogImage config if not present
-	if (!configContent.includes('ogImage:')) {
-		configContent = configContent.replace(
-			/sitemap:\s*\{[^}]*\},/,
-			`$&\n  ogImage: {
-    defaults: {
-      component: 'OgImageTemplate',
-      props: {
-        title: 'New Setup',
-        description: 'A new setup for your project',
-        image: 'https://newsetup.com/og-image.png',
-      },
-    }
-  },`,
-		);
-	}
-
-	// Update robots config if not present
-	if (!configContent.includes('robots:')) {
-		configContent = configContent.replace(
-			/ogImage:\s*\{[^}]*\},/,
-			`$&\n  robots: {
-    disallow: ['/api',],
-  },`,
-		);
-	}
-
+	// Always write the full config, replacing any existing one
 	writeFileSync(configPath, configContent, 'utf-8');
 }
 
@@ -422,86 +189,86 @@ export async function generateViteConfig(
 		const tailwindPlugin = cssVars ? '      tailwindcss(),\n' : '';
 
 		configContent = `import { fileURLToPath, URL } from 'node:url'
-${tailwindImport}import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
-import viteCompression from 'vite-plugin-compression'
-import Sitemap from 'vite-plugin-sitemap'
-import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
+      ${tailwindImport}import { defineConfig } from 'vite'
+      import vue from '@vitejs/plugin-vue'
+      import vueDevTools from 'vite-plugin-vue-devtools'
+      import viteCompression from 'vite-plugin-compression'
+      import Sitemap from 'vite-plugin-sitemap'
+      import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
 
-export default defineConfig(({ mode }) => {
-  const isProd = mode === 'production'
+      export default defineConfig(({ mode }) => {
+        const isProd = mode === 'production'
 
-  return {
-    plugins: [
-      vue(),
-${tailwindPlugin}      // 1. Only load DevTools in development
-      !isProd && vueDevTools(),
+        return {
+          plugins: [
+            vue(),
+      ${tailwindPlugin}      // 1. Only load DevTools in development
+            !isProd && vueDevTools(),
 
-      ViteImageOptimizer({
-        test: /\\.(jpe?g|png|gif|tiff|webp|svg|avif)$/i,
-        includePublic: true,
-        logStats: true,
-        png: { quality: 75 },
-        jpeg: { quality: 75 },
-        jpg: { quality: 75 },
-        webp: { lossless: false, quality: 75 },
-        avif: { quality: 70 },
-      }),
+            ViteImageOptimizer({
+              test: /\\.(jpe?g|png|gif|tiff|webp|svg|avif)$/i,
+              includePublic: true,
+              logStats: true,
+              png: { quality: 75 },
+              jpeg: { quality: 75 },
+              jpg: { quality: 75 },
+              webp: { lossless: false, quality: 75 },
+              avif: { quality: 70 },
+            }),
 
-      Sitemap({
-        hostname: 'https://newsetup.com', // Don't forget to update this!
-        dynamicRoutes: [],
-      }),
+            Sitemap({
+              hostname: 'https://newsetup.com', // Don't forget to update this!
+              dynamicRoutes: [],
+            }),
 
-      // 2. Gzip Compression (Universal Fallback)
-      viteCompression({
-        algorithm: 'gzip',
-        ext: '.gz',
-        threshold: 10240,
-        deleteOriginFile: false,
-      }),
+            // 2. Gzip Compression (Universal Fallback)
+            viteCompression({
+              algorithm: 'gzip',
+              ext: '.gz',
+              threshold: 10240,
+              deleteOriginFile: false,
+            }),
 
-      // 3. Brotli Compression (Modern Performance)
-      viteCompression({
-        algorithm: 'brotliCompress',
-        ext: '.br',
-        threshold: 10240,
-        deleteOriginFile: false,
-      }),
-    ],
+            // 3. Brotli Compression (Modern Performance)
+            viteCompression({
+              algorithm: 'brotliCompress',
+              ext: '.br',
+              threshold: 10240,
+              deleteOriginFile: false,
+            }),
+          ],
 
-    resolve: {
-      alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url))
-      },
-    },
-
-    build: {
-      cssMinify: 'lightningcss', // Ensure 'lightningcss' is in package.json
-      // 4. Split Chunks for better Browser Caching
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              // Split standard Vue dependencies into their own chunk
-              if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
-                return 'vue-vendor';
-              }
-${threejsChunk}
-              
-              return 'vendor';
-            }
+          resolve: {
+            alias: {
+              '@': fileURLToPath(new URL('./src', import.meta.url))
+            },
           },
-        },
-      },
-    },
 
-    esbuild: {
-      drop: isProd ? ['console', 'debugger'] : [],
-    },
-  }
-})
+          build: {
+            cssMinify: 'lightningcss', // Ensure 'lightningcss' is in package.json
+            // 4. Split Chunks for better Browser Caching
+            rollupOptions: {
+              output: {
+                manualChunks(id) {
+                  if (id.includes('node_modules')) {
+                    // Split standard Vue dependencies into their own chunk
+                    if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
+                      return 'vue-vendor';
+                    }
+      ${threejsChunk}
+                    
+                    return 'vendor';
+                  }
+                },
+              },
+            },
+          },
+
+          esbuild: {
+            drop: isProd ? ['console', 'debugger'] : [],
+          },
+        }
+      })
 `;
 	}
 

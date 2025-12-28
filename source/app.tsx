@@ -151,7 +151,7 @@ export default function App({
 
 				// Create typography page after CSS variables are set up
 				if (selectedFeatures.cssVars) {
-					await createTypographyPage(workingPath);
+					await createTypographyPage(workingPath, finalProjectType);
 				}
 			} else {
 				await generateCSSVariables(

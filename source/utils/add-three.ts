@@ -141,12 +141,29 @@ export async function addThree(
 	}
 
 	// Calculate import path from composables/{directoryName} to three folder
-	// In Nuxt/Vue, @/ resolves to project root (Nuxt) or src (Vue), so we use the path relative to project root
-	const threePathRelative = relative(projectRoot, targetDir).replace(
+	// The import path should be @/pages/{directoryName}/three/World.js when run in a pages directory
+	const currentPathRelative = relative(projectRoot, currentPath).replace(
 		/\\/g,
 		'/',
 	);
-	const importPath = `@/${threePathRelative}/World.js`;
+	
+	// Check if the current path is in a pages directory
+	let importPath: string;
+	if (currentPathRelative.startsWith('pages/')) {
+		// If we're in a pages directory (Vue), use @/pages/{directoryName}/three/World.js
+		importPath = `@/pages/${directoryName}/three/World.js`;
+	} else if (currentPathRelative.startsWith('app/pages/')) {
+		// If we're in app/pages directory (Nuxt), use @/pages/{directoryName}/three/World.js
+		// Note: @/ in Nuxt resolves to project root, so app/pages becomes pages
+		importPath = `@/pages/${directoryName}/three/World.js`;
+	} else {
+		// Otherwise, use the relative path from project root
+		const threePathRelative = relative(projectRoot, targetDir).replace(
+			/\\/g,
+			'/',
+		);
+		importPath = `@/${threePathRelative}/World.js`;
+	}
 
 	// Determine file extension based on project type
 	const fileExtension = projectType === 'vue' ? 'js' : 'ts';
