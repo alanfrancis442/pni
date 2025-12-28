@@ -1,6 +1,7 @@
-import {readFileSync, writeFileSync, existsSync} from 'fs';
+import {readFileSync, writeFileSync, existsSync, mkdirSync} from 'fs';
 import {join} from 'path';
 import type {ProjectType} from './project-detection.js';
+import {loadTemplateWithReplacements, loadTemplate} from './template-loader.js';
 
 export async function generateNuxtConfig(
 	projectPath: string,
@@ -11,8 +12,8 @@ export async function generateNuxtConfig(
 	const configPath = join(projectPath, 'nuxt.config.ts');
 	
 	// Always replace the config with the full template, regardless of whether it exists
-	// Generate full config template
 	const modules: string[] = [
+		'lenis/nuxt',
 		'shadcn-nuxt',
 		'@nuxtjs/seo',
 		'@nuxt/image',
@@ -26,45 +27,7 @@ export async function generateNuxtConfig(
 		? "import tailwindcss from '@tailwindcss/vite'\n\n"
 		: '';
 
-	const configContent = `${tailwindImport}// https://nuxt.com/docs/api/configuration/nuxt-config
-export default defineNuxtConfig({
-  // 1. Updated to a realistic 2024/2025 date for Nuxt 4 features
-  compatibilityDate: '2024-11-01',
-  devtools: { enabled: true },
-
-${cssVars ? `  css: ['${cssImport}'],\n\n` : ''}  ssr: true,
-
-
-  // SEO: Centralizing data
-  site: {
-    name: 'New Setup',
-    url: 'https://newsetup.com',
-    description: 'A new setup for your project',
-    defaultLocale: 'en',
-  },
-
-  // App Config for UI-wide settings
-  app: {
-    head: {
-      charset: 'utf-8',
-      viewport: 'width=device-width, initial-scale=1',
-      meta: [
-        { name: 'description', content: 'A new setup for your project' },
-        { name: 'author', content: 'New Setup' },
-        { property: 'og:type', content: 'website' },
-        { name: 'msapplication-TileColor', content: '#000000' },
-        { name: 'theme-color', content: '#000000' },
-      ],
-      link: [
-        // { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-        // { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon-180x180.png' },
-        // { rel: 'manifest', href: '/manifest.webmanifest' },
-      ],
-    },
-  },
-
-${
-	cssVars
+	const viteConfig = cssVars
 		? `  vite: {
     plugins: [tailwindcss()],
     esbuild: {
@@ -77,41 +40,9 @@ ${
   },
 
 `
-		: ''
-}  nitro: {
-    compressPublicAssets: {
-      brotli: true,
-      gzip: true,
-    },
-    // Enable crawling for SEO module compatibility
-    prerender: {
-      //  set to true for production
-      crawlLinks: false,
-      routes: ['/']
-    }
-  },
+		: '';
 
-  modules: [${modules.map(m => `'${m}'`).join(', ')}],
-
-
-  //  Image Optimization
-  image: {
-    quality: 95,
-    format: ['webp'],
-    screens: {
-      xs: 320,
-      sm: 640,
-      md: 768,
-      lg: 1200,
-      xl: 1400,
-      xxl: 1800,
-      '2xl': 2000,
-    },
-  },
-
-  // UI Framework: Shadcn
-${
-	cssVars
+	const shadcnConfig = cssVars
 		? `  shadcn: {
     prefix: '',
     componentDir: '@/components/ui',
@@ -119,28 +50,17 @@ ${
 
 
 `
-		: ''
-}  ogImage: {
-    defaults: {
-      component: 'OgImageTemplate',
-      props: {
-        title: 'New Setup',
-        description: 'A new setup for your project',
-        image: 'https://newsetup.com/og-image.png',
-      },
-    }
-  },
-  robots: {
-    disallow: ['/api',],
-  },
+		: '';
 
+	const cssImportLine = cssVars ? `  css: ['${cssImport}'],\n\n` : '';
 
-
-  sitemap: {
-    // sources: ['/api/__sitemap__/urls'] // Fetch from API
-  },
-})
-`;
+	const configContent = loadTemplateWithReplacements('nuxt/nuxt.config.ts.template', {
+		TAILWIND_IMPORT: tailwindImport,
+		CSS_IMPORT: cssImportLine,
+		VITE_CONFIG: viteConfig,
+		MODULES: modules.map(m => `'${m}'`).join(', '),
+		SHADCN_CONFIG: shadcnConfig,
+	});
 
 	// Always write the full config, replacing any existing one
 	writeFileSync(configPath, configContent, 'utf-8');
@@ -188,88 +108,11 @@ export async function generateViteConfig(
 
 		const tailwindPlugin = cssVars ? '      tailwindcss(),\n' : '';
 
-		configContent = `import { fileURLToPath, URL } from 'node:url'
-      ${tailwindImport}import { defineConfig } from 'vite'
-      import vue from '@vitejs/plugin-vue'
-      import vueDevTools from 'vite-plugin-vue-devtools'
-      import viteCompression from 'vite-plugin-compression'
-      import Sitemap from 'vite-plugin-sitemap'
-      import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
-
-      export default defineConfig(({ mode }) => {
-        const isProd = mode === 'production'
-
-        return {
-          plugins: [
-            vue(),
-      ${tailwindPlugin}      // 1. Only load DevTools in development
-            !isProd && vueDevTools(),
-
-            ViteImageOptimizer({
-              test: /\\.(jpe?g|png|gif|tiff|webp|svg|avif)$/i,
-              includePublic: true,
-              logStats: true,
-              png: { quality: 75 },
-              jpeg: { quality: 75 },
-              jpg: { quality: 75 },
-              webp: { lossless: false, quality: 75 },
-              avif: { quality: 70 },
-            }),
-
-            Sitemap({
-              hostname: 'https://newsetup.com', // Don't forget to update this!
-              dynamicRoutes: [],
-            }),
-
-            // 2. Gzip Compression (Universal Fallback)
-            viteCompression({
-              algorithm: 'gzip',
-              ext: '.gz',
-              threshold: 10240,
-              deleteOriginFile: false,
-            }),
-
-            // 3. Brotli Compression (Modern Performance)
-            viteCompression({
-              algorithm: 'brotliCompress',
-              ext: '.br',
-              threshold: 10240,
-              deleteOriginFile: false,
-            }),
-          ],
-
-          resolve: {
-            alias: {
-              '@': fileURLToPath(new URL('./src', import.meta.url))
-            },
-          },
-
-          build: {
-            cssMinify: 'lightningcss', // Ensure 'lightningcss' is in package.json
-            // 4. Split Chunks for better Browser Caching
-            rollupOptions: {
-              output: {
-                manualChunks(id) {
-                  if (id.includes('node_modules')) {
-                    // Split standard Vue dependencies into their own chunk
-                    if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
-                      return 'vue-vendor';
-                    }
-      ${threejsChunk}
-                    
-                    return 'vendor';
-                  }
-                },
-              },
-            },
-          },
-
-          esbuild: {
-            drop: isProd ? ['console', 'debugger'] : [],
-          },
-        }
-      })
-`;
+		configContent = loadTemplateWithReplacements('vite/vite.config.ts.template', {
+			TAILWIND_IMPORT: tailwindImport,
+			TAILWIND_PLUGIN: tailwindPlugin,
+			THREEJS_CHUNK: threejsChunk,
+		});
 	}
 
 	writeFileSync(configPath, configContent, 'utf-8');
@@ -280,71 +123,23 @@ export async function generateTailwindConfig(
 	projectType: ProjectType,
 ): Promise<void> {
 	const configPath = join(projectPath, 'tailwind.config.js');
-	const configContent = `/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    ${
-			projectType === 'nuxt'
-				? "'./components/**/*.{js,vue,ts}',"
-				: "'./index.html',"
-		}
-    ${
-			projectType === 'nuxt'
-				? "'./layouts/**/*.vue',"
-				: "'./src/**/*.{vue,js,ts,jsx,tsx}',"
-		}
-    ${projectType === 'nuxt' ? "'./pages/**/*.vue'," : ''}
-    ${projectType === 'nuxt' ? "'./plugins/**/*.{js,ts}'," : ''}
-    ${projectType === 'nuxt' ? "'./app.vue'," : ''}
-    ${projectType === 'nuxt' ? "'./error.vue'," : ''}
-  ],
-  theme: {
-    extend: {
-      colors: {
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-      },
-      borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-      },
-    },
-  },
-  plugins: [],
-}
-`;
+	
+	let contentPaths: string;
+	if (projectType === 'nuxt') {
+		contentPaths = `    './components/**/*.{js,vue,ts}',
+    './layouts/**/*.vue',
+    './pages/**/*.vue',
+    './plugins/**/*.{js,ts}',
+    './app.vue',
+    './error.vue',`;
+	} else {
+		contentPaths = `    './index.html',
+    './src/**/*.{vue,js,ts,jsx,tsx}',`;
+	}
+
+	const configContent = loadTemplateWithReplacements('tailwind/tailwind.config.js.template', {
+		CONTENT_PATHS: contentPaths,
+	});
 
 	writeFileSync(configPath, configContent, 'utf-8');
 }
@@ -353,15 +148,26 @@ export async function generatePostCSSConfig(
 	projectPath: string,
 ): Promise<void> {
 	const configPath = join(projectPath, 'postcss.config.js');
-	const configContent = `export default {
-  plugins: {
-    tailwindcss: {},
-    autoprefixer: {},
-  },
-}
-`;
-
+	const configContent = loadTemplate('postcss/postcss.config.js.template');
 	writeFileSync(configPath, configContent, 'utf-8');
+}
+
+export async function setupNuxtAppStructure(projectPath: string): Promise<void> {
+	// Set up app.vue with NuxtLayout, NuxtPage, and Lenis
+	const appVuePath = join(projectPath, 'app.vue');
+	const appVueContent = loadTemplate('nuxt/app.vue.template');
+	writeFileSync(appVuePath, appVueContent, 'utf-8');
+
+	// Create app/pages directory if it doesn't exist
+	const pagesDir = join(projectPath, 'app', 'pages');
+	if (!existsSync(pagesDir)) {
+		mkdirSync(pagesDir, {recursive: true});
+	}
+
+	// Create app/pages/index.vue
+	const indexPagePath = join(pagesDir, 'index.vue');
+	const indexPageContent = loadTemplate('nuxt/pages/index.vue.template');
+	writeFileSync(indexPagePath, indexPageContent, 'utf-8');
 }
 
 export async function generateConfigFiles(

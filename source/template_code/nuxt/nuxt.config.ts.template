@@ -1,0 +1,90 @@
+{{TAILWIND_IMPORT}}// https://nuxt.com/docs/api/configuration/nuxt-config
+export default defineNuxtConfig({
+  // 1. Updated to a realistic 2024/2025 date for Nuxt 4 features
+  compatibilityDate: '2024-11-01',
+  devtools: { enabled: true },
+
+{{CSS_IMPORT}}  ssr: true,
+
+
+  // SEO: Centralizing data
+  site: {
+    name: 'New Setup',
+    url: 'https://newsetup.com',
+    description: 'A new setup for your project',
+    defaultLocale: 'en',
+  },
+
+  // App Config for UI-wide settings
+  app: {
+    head: {
+      charset: 'utf-8',
+      viewport: 'width=device-width, initial-scale=1',
+      meta: [
+        { name: 'description', content: 'A new setup for your project' },
+        { name: 'author', content: 'New Setup' },
+        { property: 'og:type', content: 'website' },
+        { name: 'msapplication-TileColor', content: '#000000' },
+        { name: 'theme-color', content: '#000000' },
+      ],
+      link: [
+        // { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        // { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon-180x180.png' },
+        // { rel: 'manifest', href: '/manifest.webmanifest' },
+      ],
+    },
+  },
+
+{{VITE_CONFIG}}  nitro: {
+    compressPublicAssets: {
+      brotli: true,
+      gzip: true,
+    },
+    // Enable crawling for SEO module compatibility
+    prerender: {
+      //  set to true for production
+      crawlLinks: false,
+      routes: ['/']
+    }
+  },
+
+  modules: [{{MODULES}}],
+
+
+  //  Image Optimization
+  image: {
+    quality: 95,
+    format: ['webp'],
+    screens: {
+      xs: 320,
+      sm: 640,
+      md: 768,
+      lg: 1200,
+      xl: 1400,
+      xxl: 1800,
+      '2xl': 2000,
+    },
+  },
+
+  // UI Framework: Shadcn
+{{SHADCN_CONFIG}}  ogImage: {
+    defaults: {
+      component: 'OgImageTemplate',
+      props: {
+        title: 'New Setup',
+        description: 'A new setup for your project',
+        image: 'https://newsetup.com/og-image.png',
+      },
+    }
+  },
+  robots: {
+    disallow: ['/api',],
+  },
+
+
+
+  sitemap: {
+    // sources: ['/api/__sitemap__/urls'] // Fetch from API
+  },
+})
+

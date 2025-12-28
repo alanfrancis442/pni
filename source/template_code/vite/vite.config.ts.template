@@ -1,0 +1,82 @@
+import { fileURLToPath, URL } from 'node:url'
+{{TAILWIND_IMPORT}}import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vueDevTools from 'vite-plugin-vue-devtools'
+import viteCompression from 'vite-plugin-compression'
+import Sitemap from 'vite-plugin-sitemap'
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer'
+
+export default defineConfig(({ mode }) => {
+  const isProd = mode === 'production'
+
+  return {
+    plugins: [
+      vue(),
+{{TAILWIND_PLUGIN}}      // 1. Only load DevTools in development
+      !isProd && vueDevTools(),
+
+      ViteImageOptimizer({
+        test: /\.(jpe?g|png|gif|tiff|webp|svg|avif)$/i,
+        includePublic: true,
+        logStats: true,
+        png: { quality: 75 },
+        jpeg: { quality: 75 },
+        jpg: { quality: 75 },
+        webp: { lossless: false, quality: 75 },
+        avif: { quality: 70 },
+      }),
+
+      Sitemap({
+        hostname: 'https://newsetup.com', // Don't forget to update this!
+        dynamicRoutes: [],
+      }),
+
+      // 2. Gzip Compression (Universal Fallback)
+      viteCompression({
+        algorithm: 'gzip',
+        ext: '.gz',
+        threshold: 10240,
+        deleteOriginFile: false,
+      }),
+
+      // 3. Brotli Compression (Modern Performance)
+      viteCompression({
+        algorithm: 'brotliCompress',
+        ext: '.br',
+        threshold: 10240,
+        deleteOriginFile: false,
+      }),
+    ],
+
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url))
+      },
+    },
+
+    build: {
+      cssMinify: 'lightningcss', // Ensure 'lightningcss' is in package.json
+      // 4. Split Chunks for better Browser Caching
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              // Split standard Vue dependencies into their own chunk
+              if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
+                return 'vue-vendor';
+              }
+{{THREEJS_CHUNK}}
+              
+              return 'vendor';
+            }
+          },
+        },
+      },
+    },
+
+    esbuild: {
+      drop: isProd ? ['console', 'debugger'] : [],
+    },
+  }
+})
+
