@@ -11,6 +11,14 @@
 	"engines": {
 		"node": ">=16"
 	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/alanfrancis442/pni.git"
+	},
+	"bugs": {
+		"url": "https://github.com/alanfrancis442/pni/issues"
+	},
+	"homepage": "https://github.com/alanfrancis442/pni#readme",
 	"scripts": {
 		"build": "tsc && npm run copy-templates",
 		"copy-templates": "node scripts/copy-templates.js",
