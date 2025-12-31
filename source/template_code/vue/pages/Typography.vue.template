@@ -1,0 +1,46 @@
+<script setup lang="ts">
+</script>
+
+<template>
+    <section class="w-full py-20 px-4 min-h-screen flex items-center justify-center bg-[#DADADA] flex-col gap-16 ">
+        <div class="hero-container flex flex-col gap-16 leading-[1.2]">
+            <!-- figma design 120px fontsize -->
+            <h1 class="md:text-[120rem] text-[72rem]">Heading H1</h1>
+            <div class="divider"></div>
+            <!-- figma design 80px fontsize -->
+            <h2 class="md:text-[80rem] text-[64rem]">Heading H2</h2>
+            <div class="divider"></div>
+            <h3 class="md:text-[40rem] text-[32rem]">Heading H3</h3>
+            <!-- figma design 40px fontsize -->
+            <div class="divider"></div>
+            <h4 class="md:text-[28rem] text-[24rem]">Heading H4</h4>
+            <!-- figma design 28px fontsize -->
+            <div class="divider"></div>
+            <h5 class="md:text-[20rem] text-[18rem]">Heading H5</h5>
+            <!-- figma design 20px fontsize -->
+            <div class="divider"></div>
+            <!-- figma design  16px fontsize -->
+            <p class="text-[16rem] leading-[1.4] max-md:max-w-85.75 w-full font-helvetica">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum
+                tristique. Duis cursus,  all links in the website, eros dolor interdum nulla, ut commodo diam libero
+                vitae erat. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque
+                laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae
+                vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit,
+                sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.
+            </p>
+        </div>
+    </section>
+</template>
+
+<style scoped>
+.hero-container {
+    max-width: calc(1184em / 16);
+}
+
+.divider {
+    background-color: #969696;
+    height: 1px;
+    width: 100%;
+}
+</style>
+

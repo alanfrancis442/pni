@@ -8,7 +8,7 @@ import {
 	getDevInstallCommand,
 } from './utils/package-manager.js';
 import {getDependencies} from './utils/dependencies.js';
-import {generateConfigFiles, setupNuxtAppStructure} from './utils/config-generator.js';
+import {generateConfigFiles, setupNuxtAppStructure, setupVueAppStructure} from './utils/config-generator.js';
 import {generateCSSVariables, updateIndexHtml, createTypographyPage} from './utils/css-variables.js';
 import {setupShadcnNuxt} from './utils/shadcn-setup.js';
 import FeatureSelector, {
@@ -129,9 +129,11 @@ export default function App({
 				selectedFeatures.cssVars,
 			);
 
-			// Set up Nuxt app structure (app.vue, pages/index.vue, Lenis)
+			// Set up app structure (app.vue, pages, router, Lenis)
 			if (finalProjectType === 'nuxt') {
 				await setupNuxtAppStructure(workingPath);
+			} else if (finalProjectType === 'vue') {
+				await setupVueAppStructure(workingPath);
 			}
 
 			// Generate CSS variables (always enabled - will be overwritten after shadcn-setup)

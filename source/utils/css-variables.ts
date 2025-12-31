@@ -14,8 +14,8 @@ export async function generateCSSVariables(
 		// Nuxt: always use app/assets/css/tailwind.css
 		cssPath = join(projectPath, 'app', 'assets', 'css', 'tailwind.css');
 	} else {
-		// Vue: src/assets/style.css
-		cssPath = join(projectPath, 'src', 'assets', 'style.css');
+		// Vue: src/assets/main.css
+		cssPath = join(projectPath, 'src', 'assets', 'main.css');
 	}
 
 	// Ensure directory exists
@@ -26,7 +26,13 @@ export async function generateCSSVariables(
 		writeFileSync(cssPath, '@import "tailwindcss";\n', 'utf-8');
 	} else {
 		// Overwrite the CSS file with full content
-		const cssContent = loadTemplate('css/tailwind.css.template');
+		let cssContent = loadTemplate('css/tailwind.css.template');
+		
+		// Remove tw-animate-css import for Vue projects
+		if (projectType === 'vue') {
+			cssContent = cssContent.replace(/@import "tw-animate-css";\n/g, '');
+		}
+		
 		writeFileSync(cssPath, cssContent.trim() + '\n', 'utf-8');
 	}
 }
@@ -41,7 +47,7 @@ export async function updateIndexHtml(projectPath: string): Promise<void> {
 	let htmlContent = readFileSync(indexPath, 'utf-8');
 	
 	// Check if stylesheet link already exists
-	if (htmlContent.includes('/src/assets/style.css')) {
+	if (htmlContent.includes('/src/assets/main.css')) {
 		return; // Already added
 	}
 	
@@ -50,19 +56,19 @@ export async function updateIndexHtml(projectPath: string): Promise<void> {
 	if (htmlContent.includes('</head>')) {
 		htmlContent = htmlContent.replace(
 			'</head>',
-			'  <link href="/src/assets/style.css" rel="stylesheet">\n</head>',
+			'  <link href="/src/assets/main.css" rel="stylesheet">\n</head>',
 		);
 	} else if (htmlContent.includes('<head>')) {
 		// If no closing head tag, add after opening head tag
 		htmlContent = htmlContent.replace(
 			'<head>',
-			'<head>\n  <link href="/src/assets/style.css" rel="stylesheet">',
+			'<head>\n  <link href="/src/assets/main.css" rel="stylesheet">',
 		);
 	} else {
 		// If no head tag at all, add it after <html>
 		htmlContent = htmlContent.replace(
 			'<html>',
-			'<html>\n<head>\n  <link href="/src/assets/style.css" rel="stylesheet">\n</head>',
+			'<html>\n<head>\n  <link href="/src/assets/main.css" rel="stylesheet">\n</head>',
 		);
 	}
 	
@@ -70,15 +76,19 @@ export async function updateIndexHtml(projectPath: string): Promise<void> {
 }
 
 export async function createTypographyPage(projectPath: string, projectType?: ProjectType): Promise<void> {
-	// For Nuxt, create in app/pages, for Vue use pages
-	const pagesDir = projectType === 'nuxt' 
-		? join(projectPath, 'app', 'pages')
-		: join(projectPath, 'pages');
-	const typographyPagePath = join(pagesDir, 'typography', 'index.vue');
-	
-	// Ensure directory exists
-	mkdirSync(dirname(typographyPagePath), {recursive: true});
-	
-	const typographyPageContent = loadTemplate('nuxt/pages/typography/index.vue.template');
-	writeFileSync(typographyPagePath, typographyPageContent, 'utf-8');
+	if (projectType === 'nuxt') {
+		// For Nuxt, create in app/pages
+		const pagesDir = join(projectPath, 'app', 'pages');
+		const typographyPagePath = join(pagesDir, 'typography', 'index.vue');
+		
+		// Ensure directory exists
+		mkdirSync(dirname(typographyPagePath), {recursive: true});
+		
+		const typographyPageContent = loadTemplate('nuxt/pages/typography/index.vue.template');
+		writeFileSync(typographyPagePath, typographyPageContent, 'utf-8');
+	} else if (projectType === 'vue') {
+		// For Vue, Typography.vue is already created in setupVueAppStructure
+		// This function is mainly for Nuxt, but kept for consistency
+		// Vue typography page is created during setupVueAppStructure
+	}
 }

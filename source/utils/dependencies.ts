@@ -15,8 +15,12 @@ export const BASE_NUXT_DEPS: DependencySet = {
 };
 
 export const BASE_VUE_DEPS: DependencySet = {
-	production: [],
-	dev: [],
+	production: ['vue-router'],
+	dev: [
+		'vite-plugin-compression',
+		'vite-plugin-sitemap',
+		'vite-plugin-image-optimizer',
+	],
 };
 
 export const THREEJS_NUXT_DEPS: DependencySet = {

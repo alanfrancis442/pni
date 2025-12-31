@@ -15,7 +15,7 @@ export async function createNuxtApp(dir: string, name: string): Promise<void> {
 export async function createVueApp(dir: string, name: string): Promise<void> {
 	try {
 		// Use npm create vue@latest for Vue 3
-		execSync(`npm create vue@latest ${name} -- --yes`, {
+		execSync(`npm create vue@latest ${name}`, {
 			cwd: dir,
 			stdio: 'inherit',
 		});
