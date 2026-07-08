@@ -70,3 +70,15 @@ export function getDevInstallCommand(
 			return `npm install --save-dev ${packageList}`;
 	}
 }
+
+export function getProjectInstallCommand(pm: PackageManager): string {
+	switch (pm) {
+		case 'pnpm':
+			return 'pnpm install';
+		case 'yarn':
+			return 'yarn install';
+		case 'npm':
+		default:
+			return 'npm install';
+	}
+}

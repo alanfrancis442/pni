@@ -6,11 +6,18 @@ import {
 	detectPackageManager,
 	getInstallCommand,
 	getDevInstallCommand,
+	getProjectInstallCommand,
 } from './utils/package-manager.js';
+import {ensurePnpmAllowBuilds} from './utils/pnpm-allow-builds.js';
 import {getDependencies} from './utils/dependencies.js';
 import {generateConfigFiles, setupNuxtAppStructure, setupVueAppStructure} from './utils/config-generator.js';
 import {generateCSSVariables, updateIndexHtml, createTypographyPage} from './utils/css-variables.js';
-import {setupShadcnNuxt} from './utils/shadcn-setup.js';
+import {
+	addShadcnNuxtModule,
+	setupSsrWidthPlugin,
+	runNuxtPrepare,
+	initShadcnVue,
+} from './utils/shadcn-setup.js';
 import FeatureSelector, {
 	type SelectedFeatures,
 } from './components/FeatureSelector.js';
@@ -88,14 +95,19 @@ export default function App({
 			const cwd = dir ? resolve(dir) : process.cwd();
 			let workingPath = cwd;
 
+			const parentDir = dir ? resolve(dir) : process.cwd();
+			const pm = await detectPackageManager(parentDir);
+			const createdNewProject =
+				projectType === 'none' && Boolean(selectedFeatures.projectName);
+
 			// Create app if needed
-			if (projectType === 'none' && selectedFeatures.projectName) {
+			if (createdNewProject && selectedFeatures.projectName) {
 				setStep('creating');
-				const parentDir = dir ? resolve(dir) : process.cwd();
 				await createApp(
 					finalProjectType as 'nuxt' | 'vue',
 					parentDir,
 					selectedFeatures.projectName,
+					pm,
 				);
 				workingPath = join(parentDir, selectedFeatures.projectName);
 				setProjectPath(workingPath);
@@ -103,7 +115,17 @@ export default function App({
 
 			// Install dependencies
 			setStep('installing');
-			const pm = await detectPackageManager(workingPath);
+			if (pm === 'pnpm') {
+				ensurePnpmAllowBuilds(workingPath);
+			}
+
+			if (createdNewProject) {
+				execSync(getProjectInstallCommand(pm), {
+					cwd: workingPath,
+					stdio: 'inherit',
+				});
+			}
+
 			const deps = getDependencies(
 				finalProjectType as 'nuxt' | 'vue',
 				selectedFeatures.threejs,
@@ -120,54 +142,58 @@ export default function App({
 				execSync(devInstallCmd, {cwd: workingPath, stdio: 'inherit'});
 			}
 
-			// Generate configuration files
+			// Generate configuration files and set up project structure
 			setStep('configuring');
-			await generateConfigFiles(
-				finalProjectType as 'nuxt' | 'vue',
-				workingPath,
-				selectedFeatures.threejs,
-				selectedFeatures.cssVars,
-			);
 
-			// Set up app structure (app.vue, pages, router, Lenis)
 			if (finalProjectType === 'nuxt') {
-				await setupNuxtAppStructure(workingPath);
-			} else if (finalProjectType === 'vue') {
-				await setupVueAppStructure(workingPath);
-			}
-
-			// Generate CSS variables (always enabled - will be overwritten after shadcn-setup)
-			if (finalProjectType === 'nuxt') {
-				// For Nuxt, first create basic tailwind.css
+				// Follow shadcn-vue Nuxt setup order:
+				// tailwind.css → shadcn-nuxt module → nuxt.config → app structure →
+				// ssr plugin → nuxi prepare → shadcn-vue init → full CSS
 				await generateCSSVariables(
 					finalProjectType as 'nuxt' | 'vue',
 					workingPath,
 					true,
 				);
 
-				// Then run shadcn setup
-				setStep('configuring');
-				await setupShadcnNuxt(workingPath, pm);
+				await addShadcnNuxtModule(workingPath, pm);
 
-				// Finally, replace with full CSS content
+				await generateConfigFiles(
+					finalProjectType as 'nuxt' | 'vue',
+					workingPath,
+					selectedFeatures.threejs,
+					selectedFeatures.cssVars,
+				);
+
+				await setupNuxtAppStructure(workingPath);
+				await setupSsrWidthPlugin(workingPath);
+				await runNuxtPrepare(workingPath, pm);
+				await initShadcnVue(workingPath, pm);
+
 				await generateCSSVariables(
 					finalProjectType as 'nuxt' | 'vue',
 					workingPath,
 					false,
 				);
 
-				// Create typography page after CSS variables are set up
 				if (selectedFeatures.cssVars) {
 					await createTypographyPage(workingPath, finalProjectType);
 				}
 			} else {
+				await generateConfigFiles(
+					finalProjectType as 'nuxt' | 'vue',
+					workingPath,
+					selectedFeatures.threejs,
+					selectedFeatures.cssVars,
+				);
+
+				await setupVueAppStructure(workingPath);
+
 				await generateCSSVariables(
 					finalProjectType as 'nuxt' | 'vue',
 					workingPath,
 				);
-				
-				// For Vue projects, update index.html with stylesheet link
-				if (finalProjectType === 'vue' && selectedFeatures.cssVars) {
+
+				if (selectedFeatures.cssVars) {
 					await updateIndexHtml(workingPath);
 				}
 			}

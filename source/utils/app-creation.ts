@@ -1,21 +1,43 @@
 import {execSync} from 'child_process';
 import type {ProjectType} from './project-detection.js';
+import {
+	detectPackageManager,
+	type PackageManager,
+} from './package-manager.js';
 
-export async function createNuxtApp(dir: string, name: string): Promise<void> {
+function shellQuote(value: string): string {
+	return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+export async function createNuxtApp(
+	dir: string,
+	name: string,
+	packageManager?: PackageManager,
+): Promise<void> {
+	const pm = packageManager ?? (await detectPackageManager(dir));
+	const quotedName = shellQuote(name);
+
 	try {
-		execSync(`npx nuxi@latest init ${name}`, {
-			cwd: dir,
-			stdio: 'inherit',
-		});
+		execSync(
+			`npm create nuxt@latest ${quotedName} -- --template minimal --no-install --packageManager ${pm} --gitInit`,
+			{
+				cwd: dir,
+				stdio: 'inherit',
+			},
+		);
 	} catch (error) {
 		throw new Error(`Failed to create Nuxt app: ${error}`);
 	}
 }
 
-export async function createVueApp(dir: string, name: string): Promise<void> {
+export async function createVueApp(
+	dir: string,
+	name: string,
+): Promise<void> {
+	const quotedName = shellQuote(name);
+
 	try {
-		// Use npm create vue@latest for Vue 3
-		execSync(`npm create vue@latest ${name}`, {
+		execSync(`npm create vue@latest ${quotedName} -- --default`, {
 			cwd: dir,
 			stdio: 'inherit',
 		});
@@ -28,9 +50,10 @@ export async function createApp(
 	projectType: ProjectType,
 	dir: string,
 	name: string,
+	packageManager?: PackageManager,
 ): Promise<void> {
 	if (projectType === 'nuxt') {
-		await createNuxtApp(dir, name);
+		await createNuxtApp(dir, name, packageManager);
 	} else if (projectType === 'vue') {
 		await createVueApp(dir, name);
 	} else {

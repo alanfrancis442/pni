@@ -9,7 +9,6 @@ export const BASE_NUXT_DEPS: DependencySet = {
 		'@nuxtjs/seo',
 		'@nuxt/image',
 		'@nuxtjs/device',
-		'shadcn-nuxt',
 	],
 	dev: [],
 };
