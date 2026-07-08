@@ -1,5 +1,5 @@
-import {execSync} from 'child_process';
-import type {ProjectType} from './project-detection.js';
+import { execSync } from 'child_process';
+import type { ProjectType } from './project-detection.js';
 import {
 	detectPackageManager,
 	type PackageManager,

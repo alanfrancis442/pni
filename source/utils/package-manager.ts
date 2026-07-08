@@ -82,3 +82,44 @@ export function getProjectInstallCommand(pm: PackageManager): string {
 			return 'npm install';
 	}
 }
+
+/** Run a published package temporarily (npx / pnpm dlx / yarn dlx). */
+export function getDlxCommand(pm: PackageManager): string {
+	switch (pm) {
+		case 'pnpm':
+			return 'pnpm dlx';
+		case 'yarn':
+			return 'yarn dlx';
+		case 'npm':
+		default:
+			return 'npx';
+	}
+}
+
+/**
+ * Scaffold Nuxt via the package manager's dlx runner (npx / pnpm dlx / yarn dlx).
+ * Prefer this over `npm|pnpm create` so pnpm-only environments don't need npm,
+ * and so init flags are forwarded the same way on every package manager.
+ */
+export function getCreateNuxtCommand(
+	pm: PackageManager,
+	quotedName: string,
+): string {
+	return `${getDlxCommand(pm)} nuxi@latest init ${quotedName} --template minimal --no-install --packageManager ${pm} --gitInit`;
+}
+
+export function getCreateVueCommand(
+	pm: PackageManager,
+	quotedName: string,
+): string {
+	switch (pm) {
+		case 'pnpm':
+			// pnpm create does not use `--` to forward args
+			return `pnpm create vue@latest ${quotedName} --default`;
+		case 'yarn':
+			return `yarn create vue ${quotedName} --default`;
+		case 'npm':
+		default:
+			return `npm create vue@latest ${quotedName} -- --default`;
+	}
+}

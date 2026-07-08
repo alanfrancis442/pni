@@ -1,17 +1,13 @@
 import {execSync} from 'child_process';
 import {writeFileSync, mkdirSync, existsSync} from 'fs';
 import {join, dirname} from 'path';
-import type {PackageManager} from './package-manager.js';
-
-function getExecCommand(packageManager: PackageManager): string {
-	return packageManager === 'pnpm' ? 'pnpm dlx' : 'npx';
-}
+import {getDlxCommand, type PackageManager} from './package-manager.js';
 
 export async function addShadcnNuxtModule(
 	projectPath: string,
 	packageManager: PackageManager,
 ): Promise<void> {
-	const execCommand = getExecCommand(packageManager);
+	const execCommand = getDlxCommand(packageManager);
 
 	execSync(`${execCommand} nuxi@latest module add shadcn-nuxt`, {
 		cwd: projectPath,
@@ -40,7 +36,7 @@ export async function runNuxtPrepare(
 	projectPath: string,
 	packageManager: PackageManager,
 ): Promise<void> {
-	const execCommand = getExecCommand(packageManager);
+	const execCommand = getDlxCommand(packageManager);
 
 	execSync(`${execCommand} nuxi@latest prepare`, {
 		cwd: projectPath,
@@ -52,7 +48,7 @@ export async function initShadcnVue(
 	projectPath: string,
 	packageManager: PackageManager,
 ): Promise<void> {
-	const execCommand = getExecCommand(packageManager);
+	const execCommand = getDlxCommand(packageManager);
 
 	execSync(
 		`${execCommand} shadcn-vue@latest init --defaults --template nuxt -b neutral -y`,
