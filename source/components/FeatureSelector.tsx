@@ -6,6 +6,7 @@ export interface SelectedFeatures {
 	projectType: ProjectType;
 	threejs: boolean;
 	cssVars: boolean;
+	browseNuxtModules: boolean;
 	projectName?: string;
 }
 
@@ -38,16 +39,30 @@ export default function FeatureSelector({
 			: 'nuxt',
 	);
 	const [threejs, setThreejs] = useState(flags.threejs ?? false);
+	const [browseNuxtModules, setBrowseNuxtModules] = useState(true);
 	const [projectName, setProjectName] = useState('');
 	const cssVars = true; // Always enabled - CSS will be overwritten after shadcn-setup
 
+	const threejsStep = detectedType === 'none' ? 2 : 0;
+	const nuxtModulesStep = projectType === 'nuxt' ? threejsStep + 1 : -1;
+
+	const finishSelection = () => {
+		onSelect({
+			projectType,
+			threejs,
+			cssVars: true,
+			browseNuxtModules: projectType === 'nuxt' ? browseNuxtModules : false,
+			projectName: detectedType === 'none' ? projectName : undefined,
+		});
+	};
+
 	useEffect(() => {
 		if (nonInteractive) {
-			// Auto-select based on flags or detected type
 			onSelect({
 				projectType,
 				threejs,
 				cssVars,
+				browseNuxtModules: false,
 			});
 		}
 	}, [nonInteractive, projectType, threejs, cssVars, onSelect]);
@@ -59,44 +74,46 @@ export default function FeatureSelector({
 
 		if (key.return) {
 			if (step === 0 && detectedType === 'none') {
-				// Project type selected
 				setStep(1);
 			} else if (step === 1 && detectedType === 'none') {
-				// Project name entered
 				setStep(2);
-			} else if (step === (detectedType === 'none' ? 2 : 0)) {
-				// Three.js question answered - CSS vars are always enabled
-				onSelect({
-					projectType,
-					threejs,
-					cssVars: true, // Always enable CSS vars
-					projectName: detectedType === 'none' ? projectName : undefined,
-				});
+			} else if (step === threejsStep) {
+				if (projectType === 'nuxt') {
+					setStep(nuxtModulesStep);
+				} else {
+					finishSelection();
+				}
+			} else if (step === nuxtModulesStep) {
+				finishSelection();
 			}
 		}
 
 		if (key.upArrow || key.downArrow) {
 			if (step === 0 && detectedType === 'none') {
 				setProjectType(prev => (prev === 'nuxt' ? 'vue' : 'nuxt'));
-			} else if (step === (detectedType === 'none' ? 2 : 0)) {
-				// Three.js question
+			} else if (step === threejsStep) {
 				setThreejs(prev => !prev);
+			} else if (step === nuxtModulesStep) {
+				setBrowseNuxtModules(prev => !prev);
 			}
 		}
 
 		if (input === 'y' || input === 'Y') {
-			if (step === (detectedType === 'none' ? 2 : 0)) {
+			if (step === threejsStep) {
 				setThreejs(true);
+			} else if (step === nuxtModulesStep) {
+				setBrowseNuxtModules(true);
 			}
 		}
 
 		if (input === 'n' || input === 'N') {
-			if (step === (detectedType === 'none' ? 2 : 0)) {
+			if (step === threejsStep) {
 				setThreejs(false);
+			} else if (step === nuxtModulesStep) {
+				setBrowseNuxtModules(false);
 			}
 		}
 
-		// Handle project name input
 		if (
 			step === 1 &&
 			detectedType === 'none' &&
@@ -142,7 +159,7 @@ export default function FeatureSelector({
 					<Box flexDirection="column" paddingLeft={2}>
 						<Text>
 							<Text color={projectType === 'nuxt' ? 'cyan' : 'gray'}>
-								{projectType === 'nuxt' ? '→' : ' '} 
+								{projectType === 'nuxt' ? '→' : ' '}
 							</Text>
 							<Text color={projectType === 'nuxt' ? 'cyan' : 'white'} bold>
 								[<Text color={projectType === 'nuxt' ? 'green' : 'gray'}>{projectType === 'nuxt' ? '●' : '○'}</Text>] Nuxt
@@ -150,7 +167,7 @@ export default function FeatureSelector({
 						</Text>
 						<Text>
 							<Text color={projectType === 'vue' ? 'cyan' : 'gray'}>
-								{projectType === 'vue' ? '→' : ' '} 
+								{projectType === 'vue' ? '→' : ' '}
 							</Text>
 							<Text color={projectType === 'vue' ? 'cyan' : 'white'} bold>
 								[<Text color={projectType === 'vue' ? 'green' : 'gray'}>{projectType === 'vue' ? '●' : '○'}</Text>] Vue
@@ -179,7 +196,7 @@ export default function FeatureSelector({
 		}
 	}
 
-	if (step === (detectedType === 'none' ? 2 : 0)) {
+	if (step === threejsStep) {
 		return (
 			<Box flexDirection="column" padding={1}>
 				<Text color="cyan" bold>🎨 Additional Features</Text>
@@ -189,7 +206,7 @@ export default function FeatureSelector({
 				<Box flexDirection="column" paddingLeft={2}>
 					<Text>
 						<Text color={threejs ? 'cyan' : 'gray'}>
-							{threejs ? '→' : ' '} 
+							{threejs ? '→' : ' '}
 						</Text>
 						<Text color={threejs ? 'cyan' : 'white'} bold>
 							[<Text color={threejs ? 'green' : 'gray'}>{threejs ? '✓' : ' '}</Text>] <Text color={threejs ? 'green' : 'white'}>Yes</Text>
@@ -197,10 +214,44 @@ export default function FeatureSelector({
 					</Text>
 					<Text>
 						<Text color={!threejs ? 'cyan' : 'gray'}>
-							{!threejs ? '→' : ' '} 
+							{!threejs ? '→' : ' '}
 						</Text>
 						<Text color={!threejs ? 'cyan' : 'white'} bold>
 							[<Text color={!threejs ? 'red' : 'gray'}>{!threejs ? '✗' : ' '}</Text>] <Text color={!threejs ? 'red' : 'white'}>No</Text>
+						</Text>
+					</Text>
+				</Box>
+				<Text> </Text>
+				<Text color="gray">
+					Use <Text color="cyan">↑/↓</Text> to toggle, <Text color="cyan">y/n</Text> to select, or <Text color="cyan">Enter</Text> to continue
+				</Text>
+			</Box>
+		);
+	}
+
+	if (step === nuxtModulesStep) {
+		return (
+			<Box flexDirection="column" padding={1}>
+				<Text color="cyan" bold>📦 Nuxt Modules</Text>
+				<Text> </Text>
+				<Text color="yellow" bold>Browse and install official Nuxt modules?</Text>
+				<Text color="gray">Opens the Nuxt module browser during project creation</Text>
+				<Text> </Text>
+				<Box flexDirection="column" paddingLeft={2}>
+					<Text>
+						<Text color={browseNuxtModules ? 'cyan' : 'gray'}>
+							{browseNuxtModules ? '→' : ' '}
+						</Text>
+						<Text color={browseNuxtModules ? 'cyan' : 'white'} bold>
+							[<Text color={browseNuxtModules ? 'green' : 'gray'}>{browseNuxtModules ? '✓' : ' '}</Text>] <Text color={browseNuxtModules ? 'green' : 'white'}>Yes</Text>
+						</Text>
+					</Text>
+					<Text>
+						<Text color={!browseNuxtModules ? 'cyan' : 'gray'}>
+							{!browseNuxtModules ? '→' : ' '}
+						</Text>
+						<Text color={!browseNuxtModules ? 'cyan' : 'white'} bold>
+							[<Text color={!browseNuxtModules ? 'red' : 'gray'}>{!browseNuxtModules ? '✗' : ' '}</Text>] <Text color={!browseNuxtModules ? 'red' : 'white'}>No</Text>
 						</Text>
 					</Text>
 				</Box>

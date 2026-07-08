@@ -9,6 +9,10 @@ import {
 	getProjectInstallCommand,
 } from './utils/package-manager.js';
 import {ensurePnpmAllowBuilds} from './utils/pnpm-allow-builds.js';
+import {
+	parseNuxtModulesFromConfig,
+	installNuxtModulesFromConfig,
+} from './utils/nuxt-modules.js';
 import {getDependencies} from './utils/dependencies.js';
 import {generateConfigFiles, setupNuxtAppStructure, setupVueAppStructure} from './utils/config-generator.js';
 import {generateCSSVariables, updateIndexHtml, createTypographyPage} from './utils/css-variables.js';
@@ -99,6 +103,7 @@ export default function App({
 			const pm = await detectPackageManager(parentDir);
 			const createdNewProject =
 				projectType === 'none' && Boolean(selectedFeatures.projectName);
+			let selectedNuxtModules: string[] = [];
 
 			// Create app if needed
 			if (createdNewProject && selectedFeatures.projectName) {
@@ -108,9 +113,21 @@ export default function App({
 					parentDir,
 					selectedFeatures.projectName,
 					pm,
+					{
+						browseNuxtModules:
+							finalProjectType === 'nuxt' &&
+							selectedFeatures.browseNuxtModules,
+					},
 				);
 				workingPath = join(parentDir, selectedFeatures.projectName);
 				setProjectPath(workingPath);
+
+				if (
+					finalProjectType === 'nuxt' &&
+					selectedFeatures.browseNuxtModules
+				) {
+					selectedNuxtModules = parseNuxtModulesFromConfig(workingPath);
+				}
 			}
 
 			// Install dependencies
@@ -120,6 +137,10 @@ export default function App({
 			}
 
 			if (createdNewProject) {
+				if (finalProjectType === 'nuxt') {
+					await installNuxtModulesFromConfig(workingPath, pm);
+				}
+
 				execSync(getProjectInstallCommand(pm), {
 					cwd: workingPath,
 					stdio: 'inherit',
@@ -162,6 +183,7 @@ export default function App({
 					workingPath,
 					selectedFeatures.threejs,
 					selectedFeatures.cssVars,
+					selectedNuxtModules,
 				);
 
 				await setupNuxtAppStructure(workingPath);

@@ -104,8 +104,10 @@ export function getDlxCommand(pm: PackageManager): string {
 export function getCreateNuxtCommand(
 	pm: PackageManager,
 	quotedName: string,
+	browseModules = false,
 ): string {
-	return `${getDlxCommand(pm)} nuxi@latest init ${quotedName} --template minimal --no-install --packageManager ${pm} --gitInit`;
+	const moduleFlag = browseModules ? '' : ' --no-modules';
+	return `${getDlxCommand(pm)} nuxi@latest init ${quotedName} --template minimal --no-install${moduleFlag} --packageManager ${pm} --gitInit`;
 }
 
 export function getCreateVueCommand(

@@ -35,6 +35,14 @@ export default function Summary({features, projectPath}: Props) {
 					<Text>
 						<Text color="magenta">CSS Variables:</Text> <Text color="green" bold>Yes</Text> <Text color="gray">(auto-generated)</Text>
 					</Text>
+					{features.projectType === 'nuxt' && (
+						<Text>
+							<Text color="magenta">Nuxt Modules:</Text>{' '}
+							<Text color={features.browseNuxtModules ? 'green' : 'gray'} bold>
+								{features.browseNuxtModules ? 'Browsed during setup' : 'Skipped'}
+							</Text>
+						</Text>
+					)}
 					<Text>
 						<Text color="magenta">Project Path:</Text> <Text color="white">{projectPath}</Text>
 					</Text>

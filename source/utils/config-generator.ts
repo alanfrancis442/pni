@@ -8,17 +8,19 @@ export async function generateNuxtConfig(
 	//@ts-ignore
 	threejs: boolean,
 	cssVars: boolean,
+	extraModules: string[] = [],
 ): Promise<void> {
 	const configPath = join(projectPath, 'nuxt.config.ts');
 	
 	// Always replace the config with the full template, regardless of whether it exists
-	const modules: string[] = [
+	const modules = [...new Set([
 		'lenis/nuxt',
 		'shadcn-nuxt',
 		'@nuxtjs/seo',
 		'@nuxt/image',
 		'@nuxtjs/device',
-	];
+		...extraModules,
+	])];
 
 	// Use assets/css/tailwind.css for Nuxt projects
 	const cssImport = '~/assets/css/tailwind.css';
@@ -410,9 +412,10 @@ export async function generateConfigFiles(
 	projectPath: string,
 	threejs: boolean,
 	cssVars: boolean,
+	extraNuxtModules: string[] = [],
 ): Promise<void> {
 	if (projectType === 'nuxt') {
-		await generateNuxtConfig(projectPath, threejs, cssVars);
+		await generateNuxtConfig(projectPath, threejs, cssVars, extraNuxtModules);
 	} else if (projectType === 'vue') {
 		await generateViteConfig(projectPath, threejs, cssVars);
 	}
