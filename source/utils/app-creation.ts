@@ -1,4 +1,5 @@
 import {execSync} from 'child_process';
+import {join} from 'path';
 import type {ProjectType} from './project-detection.js';
 import {
 	detectPackageManager,
@@ -6,12 +7,20 @@ import {
 	getCreateVueCommand,
 	type PackageManager,
 } from './package-manager.js';
+import {
+	ensurePnpmAllowBuilds,
+	seedPnpmAllowBuildsWhenReady,
+} from './pnpm-allow-builds.js';
 
 export type CreateAppOptions = {
 	browseNuxtModules?: boolean;
 };
 
 function shellQuote(value: string): string {
+	if (process.platform === 'win32') {
+		return `"${value.replace(/"/g, '\\"')}"`;
+	}
+
 	return `'${value.replace(/'/g, `'\\''`)}'`;
 }
 
@@ -33,6 +42,12 @@ export async function createNuxtApp(
 	const pm = packageManager ?? (await detectPackageManager(dir));
 	const quotedName = shellQuote(name);
 	const browseModules = options.browseNuxtModules ?? false;
+	const projectPath = join(dir, name);
+
+	let stopPnpmSeed: (() => void) | undefined;
+	if (browseModules && pm === 'pnpm') {
+		stopPnpmSeed = seedPnpmAllowBuildsWhenReady(projectPath).stop;
+	}
 
 	try {
 		execSync(getCreateNuxtCommand(pm, quotedName, browseModules), {
@@ -42,6 +57,11 @@ export async function createNuxtApp(
 		});
 	} catch (error) {
 		throw new Error(`Failed to create Nuxt app: ${error}`);
+	} finally {
+		stopPnpmSeed?.();
+		if (browseModules && pm === 'pnpm') {
+			ensurePnpmAllowBuilds(projectPath);
+		}
 	}
 }
 
